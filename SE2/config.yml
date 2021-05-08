@@ -5,3 +5,17 @@ filename_data : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\n
 #   - odom (odometry)
 #   - L-InEKF (Left-invariant EKF)
 init_method : 'L-InEkF'
+
+# Gauss-Newton optimization parameters
+optim_params:
+  # Maximum number of iterations
+  max_iterations  : 10
+
+  # Normalized gradient stopping criterion. 
+  #   The normalization is (norm( J' * (Sigma \ e))*norm(Sigma)) < tol
+  tol_ngrad_stop         : 1e-6
+
+  # Armijo parameters
+  armijo_params         : 0.5
+  armijo_c1             : 1e-6
+  armijo_max_itartions  : 15

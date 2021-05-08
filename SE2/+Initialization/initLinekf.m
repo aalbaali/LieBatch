@@ -54,7 +54,6 @@ function [X_hat, P_hat] = initLinekf(struct_prior, struct_vel, struct_gyro, stru
     t_gps = struct_gps.time;
     n_gps = length( t_gps);
     
-    
     % Create arrays
     X_hat = zeros( 3, 3, K);
     P_hat = zeros( 3, 3, K);
