@@ -69,9 +69,63 @@ function batchOptimizationSE2(struct_prior, struct_vel, struct_gyro, struct_gps,
     n_gps   = length( t_gps);
     idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
     
-    dd =errorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    % Compte covariances/weight function
+    dd =computeCovarianceerrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+%     dd =errorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
 end
 
+function [ cov_err] = computeCovarianceerrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
+    % Computes the covariance on the error function    
+    
+    dt_func_k = @(kk) t_sim( kk + 1) - t_sim( kk);
+    
+    % Number of poses
+    K = length( t_sim);
+    % Number of states per pose (constant value)
+    n_x = 3;
+        
+    % GPS params
+    t_gps   = struct_gps.time;
+    n_gps   = 2;
+    idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+    K_gps   = length( t_gps);
+    
+    % First, compute the Jacobian of the error function w.r.t. the state        
+    jac_prior_n = sparse( [], [], [], 3, n_x * K + n_gps * K_gps);
+    jac_prior_n( 1 : end, 1 : 3) = speye( n_x);
+    %   Odometry         
+    jac_odom_w_cell = arrayfun( @(kk) dt_func_k(kk) * speye( n_x), 1 : K - 1, 'UniformOutput', false);
+    jac_odom_w = sparse( [], [], [], 3 * (K - 1), n_x * K + n_gps * K_gps);
+    jac_odom_w(1 : end, 3 + (1:n_x * (K -1))) = blkdiag( jac_odom_w_cell{ :});
+    %   GPS
+    func_jac_gps_n_k = @(kk) X_initial( 1 : 2, 1 : 2, kk)';
+    jac_gps_n_cell = arrayfun(@(kk) func_jac_gps_n_k(kk), idx_gps, 'UniformOutput', false);    
+    jac_gps_n = sparse( [], [], [], n_gps * K_gps, 3 * K + n_gps * K_gps);
+    jac_gps_n( 1 : end, n_x * K + 1 : end) = blkdiag( jac_gps_n_cell{ :});
+    
+    % Augment Jacobians
+    jac_err = [ jac_prior_n;
+                jac_odom_w;
+                jac_gps_n];
+            
+    % Now, the covariances on the random variables
+    %   Prior
+    cov_prior = struct_prior.cov;
+    %   Odometry (i.e., Q)
+    %       First, construct the Q 3D matrix (i.e., cov([theta; vel])
+    Q_3d = zeros( 3, 3, K - 1);
+    Q_3d( 1, 1, :) = struct_gyro.cov(:,:, 1 : K - 1);
+    Q_3d( 2 : 3, 2 : 3, :) = struct_vel.cov( :, :, 1 : K - 1);
+    cov_odom  = sparse( blkdiag3d( Q_3d));
+    %   GPS
+    cov_gps   = sparse( blkdiag3d( struct_gps.cov));
+    
+    % Augment covariances (in the block-diagonal sense)
+    cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps);
+    
+    % Finally, compute the covariances on the error function
+    cov_err = jac_err * cov_rvs * jac_err';
+end
 
 function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
     % Batch error function
