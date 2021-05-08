@@ -11,7 +11,7 @@
 %   Amro Al-Baali
 %   08-May-2021
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% clear all;
+clear all;
 close all;
 
 %% Settings
@@ -46,27 +46,87 @@ cov_gyro  = data_struct.meas.gyro.cov;
 %   GPS
 meas_gps = data_struct.meas.gps.mean;
 cov_gps  = data_struct.meas.gps.cov;
-%% Initialize
+
+%% Run L-InEKF
+[ X_kf, P_kf] = Initialization.initLinekf( data_struct.meas.prior, ...
+                                    data_struct.meas.velocity, ...
+                                    data_struct.meas.gyro, ...
+                                    data_struct.meas.gps, ...
+                                    t_sim);
+%% Batch initialization
 fprintf("Initializing states using '%s'\n", config_yml.init_method);
 tic();
 switch lower(config_yml.init_method)
     case 'odom'
         X_initial = Initialization.initOdom( X_prior, meas_vel, meas_gyro, t_sim);
-    case 'l-inekf'        
-        [ X_initial, P_initial] = Initialization.initLinekf( data_struct.meas.prior, ...
-                                    data_struct.meas.velocity, ...
-                                    data_struct.meas.gyro, ...
-                                    data_struct.meas.gps, ...
-                                    t_sim);
+    case 'l-inekf'   
+        X_initial = X_kf;
+        
 end
 disp('Done');
 toc();
 
 %% Set up the batch problem
-batchOptimization.batchOptimizationSE2(data_struct.meas.prior, ...
+[ X_batch, infm_batch ] = batchOptimization.batchOptimizationSE2(data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
                                     data_struct.meas.gps, ...
                                     t_sim, ...
                                     X_initial, ...
                                     config_yml.optim_params);
+
+
+%% Analysis
+K = size( X_batch, 3);
+
+% Get ground truth
+X_gt = load( config_yml.filename_gt).X_poses;
+
+% Compute errors
+xi_kf_arr = cell2mat( arrayfun( @(kk) SE2.Log( X_gt(:, :, kk) \ X_kf(:, :, kk)), ...
+    1 : K, 'UniformOutput', false));
+xi_batch_arr = cell2mat( arrayfun( @(kk) SE2.Log( X_gt(:, :, kk) \ X_batch(:, :, kk)), ...
+    1 : K, 'UniformOutput', false));
+
+% Get batch covariances
+P_batch = getBlockDiagonals( inv( infm_batch), 3);
+
+%% Plots
+% Time
+t_sim = data_struct.sim.time;
+% Colors
+col_kf_err = matlabColors( 'orange');
+col_kf_var = col_kf_err; %matlabColors( 'orange');
+
+col_batch_err = matlabColors( 'blue');
+col_batch_var = col_batch_err; %matlabColors( 'orange');
+
+% Error plots
+figure;
+for lv1 = 1 : 3
+    subplot( 3, 1, lv1);
+    hold all; grid on;
+    % Filter
+    plot( t_sim, xi_kf_arr( lv1, :), 'LineWidth', 1.5, 'Color', col_kf_err, ...
+        'DisplayName', 'Filter');
+    plot( t_sim, 3 * sqrt( squeeze( P_kf( lv1, lv1, :))), '-.', 'LineWidth', 1.5, ...
+        'Color', col_kf_var, 'HandleVisibility', 'off');
+    plot( t_sim, -3 * sqrt( squeeze( P_kf( lv1, lv1, :))), '-.', 'LineWidth', 1.5, ...
+        'Color', col_kf_var, 'HandleVisibility', 'off');
+    
+    % Batch
+    plot( t_sim, xi_batch_arr( lv1, :), 'LineWidth', 1.5, 'Color', col_batch_err, ...
+        'DisplayName', 'Batch');
+    plot( t_sim, 3 * sqrt( squeeze( P_batch( lv1, lv1, :))), '-.', 'LineWidth', 1.5, ...
+        'Color', col_batch_var, 'HandleVisibility', 'off');
+    plot( t_sim, -3 * sqrt( squeeze( P_batch( lv1, lv1, :))), '-.', 'LineWidth', 1.5, ...
+        'Color', col_batch_var, 'HandleVisibility', 'off');
+    
+    ylabel(sprintf('$\\delta\\xi_{%i}$', lv1), 'Interpreter', 'latex', 'FontSize', 14);
+    if lv1 == 1
+        legend('Interpreter', 'latex', 'FontSize', 14);
+    end
+end
+xlabel('$t_{k}$ [s]', 'Interpreter', 'latex', 'FontSize', 14);
+
+

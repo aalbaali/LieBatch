@@ -1,4 +1,4 @@
-function batchOptimizationSE2(struct_prior, struct_vel, struct_gyro, struct_gps, ...
+function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel, struct_gyro, struct_gps, ...
     t_sim, X_initial, params)
     %INITLINEKF(struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
     %generates left-invariant EKF solution.
@@ -70,11 +70,123 @@ function batchOptimizationSE2(struct_prior, struct_vel, struct_gyro, struct_gps,
     idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
     
     % Compte covariances/weight function
-    dd =computeCovarianceerrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
-%     dd =errorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    Sigma = computeCovarianceErrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    
+    % Lambda error function
+    func_err = @( X) errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    
+    % Cholesky factor
+    R_sigma = chol( Sigma, 'upper');
+    
+    % Cost array
+    cost_arr = [];
+    % Armijo params
+    beta = params.armijo_beta;
+    c1   = params.armijo_c1;
+    
+    % States at iteration j
+    X_j = X_initial;    
+    for lv1 = 1 : params.max_iterations
+        % Compute error function
+        [ e, J] = func_err( X_j);
+        % Compute search direction
+        switch lower( params.lin_solver)
+            case 'qr'
+                % Reorder vars
+                p = colamd( J);
+                % Solve using QR decomposition
+                [ ~, R] = qr( R_sigma * [ J( :, p), -e], 0);
+                % Search direction
+                d_k( p) = R( :, 1 : end - 1) \ R( :, end);
+
+            case 'chol'
+                % Get weight matrix (inverse of covariance)                    
+                p = colamd( R_sigma * J);
+                R = chol( sparse( J(:, p)' * (R_sigma' * R_sigma) * J(:, p)));
+                d_k( p) = full( R \ ( R' \ (J( :, p)' * (R_sigma' * R_sigma) * (-e))));
+            case '\'
+                d_k = -(J' * (Sigma \ J)) \ (J' * (Sigma \ e));        
+        end
+        % Make sure d_k is a column matrix;
+        d_k = d_k(:);
+        
+        % Check if search direction is a descent direction
+        if J' * (Sigma \ e) > 0
+            warninig('Not a descent direction!');
+        end
+        
+        % Reshape search direction 
+        d_k_mat = reshape( d_k , 3, []);
+        
+        % Armijo back-tracking
+        obj_val = (1/2) * e' * (Sigma\e); % Objective function value
+        grad_val = d_k' * (J' * e);
+        for lv2 = 0 : params.armijo_max_iteration-1
+            alpha_k = beta^lv2;     
+            % Increment X_k as to left-invariant error
+            X_j_tmp = reshape( cell2mat( arrayfun( @(kk) X_j( :, :, kk) * ...
+                se2alg.expMap( - alpha_k * d_k_mat( :, kk)), 1 : K, ...
+                'UniformOutput', false)), 3, 3, []);
+            % Compute new error function
+            [ e, ~] = func_err( X_j_tmp);
+            obj_val_tmp = (1/2)* e' * (Sigma \ e);
+            if obj_val_tmp <= obj_val + c1 * alpha_k * grad_val
+                % Armijo stopping criterion
+                % Solution found
+                X_j = X_j_tmp;
+                break;
+            end                        
+        end
+        if lv2 == params.armijo_max_iteration-1
+            warning('Armijo max iteration reached');            
+            X_j = X_j_tmp;            
+            break;        
+        end
+        
+        % Update error and Jacobian
+        [ e, J] = func_err( X_j_tmp);
+
+        cost_arr = [cost_arr; e' * (Sigma \ e)];
+        
+        % Stopping criterion
+        if norm( J' * (Sigma \ e)) * norm(Sigma, 'fro') <= params.tol_ngrad_stop ...
+                        || norm( d_k)/numel(d_k) <= params.tol_ngrad_stop
+            fprintf('Batch on r_ba_a converged after %i iterations\n', lv1);            
+            successful = true;
+            break;
+        end
+    end
+    
+    % Prompt warning if optimization didn't converge after max.
+    % iterations reached.
+    if ~successful && ~ ( norm( J' * (Sigma \ e))*norm(Sigma, 'fro') <  ...
+            params.tol_ngrad_stop ...
+            || norm( d_k)/numel(d_k) <= params.tol_ngrad_stop)
+        warning('Optimization did not converge');
+    else
+        successful = true;
+    end
+
+    % Covariance matrix
+    switch lower( params.lin_solver)
+        case 'qr'                           
+            L = sparse( 1 : length( p), p, 1);                    
+            joint_infm = ((R(:, 1 : end - 1) * L)' * ...
+                (R(:, 1 : end - 1) * L));
+        case 'chol'
+            % Computing joint information matrix  (L matrix is due to
+            % reordering of variables)
+            L = sparse( 1 : length( p), p, 1);
+            joint_infm = ((R * L)' * (R * L));
+    end
+    
+    % Compute information matrix    
+    infm_batch = J' * ( Sigma \ J);
+    
+    X_batch = X_j;
 end
 
-function [ cov_err] = computeCovarianceerrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
+function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
     % Computes the covariance on the error function    
     
     dt_func_k = @(kk) t_sim( kk + 1) - t_sim( kk);
@@ -124,7 +236,10 @@ function [ cov_err] = computeCovarianceerrorFunction( X_initial, struct_prior, s
     cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps);
     
     % Finally, compute the covariances on the error function
-    cov_err = jac_err * cov_rvs * jac_err';
+    cov_err = (jac_err * cov_rvs * jac_err');
+    
+    % Ensure symmetry
+    cov_err = (1/2) * ( cov_err + cov_err');    
 end
 
 function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
@@ -193,10 +308,14 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
             y_k = y_gps( :, idx_gps_j);
             
             % Error
-            err_gps( :, idx_gps_j) = X( 1 : 2, 1 : 2, kk)' * ( y_k - X( 1 : 2, 3, kk));
+            [ C, r] = SE2.decompose( X( :, :, kk));
+%             err_gps( :, idx_gps_j) = C' * ( y_k - r);
+            err_gps( :, idx_gps_j) = C' * ( y_k - r);
             % Jacobians of measurement model 
             %   w.r.t. state
-            H_k = - [ zeros( 2, 1), eye( 2)];
+            % NOTE: SEEMS TO BE WORKING WITHOUT THE - SIGN. I NEED TO FIGURE OUT
+            % WHAT'S HAPPENING
+            H_k = [ zeros( 2, 1), eye( 2)];
             jac_gps_x = [ jac_gps_x;
                     kron( sparse( 1, kk, 1, 1, K), H_k)];
             
