@@ -1,0 +1,7 @@
+# Noisy data file
+filename_data : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\noisy_data.mat'
+
+# Initialization type. Options:
+#   - odom (odometry)
+#   - L-InEKF (Left-invariant EKF)
+init_method : 'odom'
