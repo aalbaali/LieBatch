@@ -76,7 +76,8 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
     func_err = @( X) errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
     
     % Cholesky factor
-    R_sigma = chol( Sigma, 'upper');
+%     R_sigma = chol( Sigma, 'upper');
+    L_sigma = chol( Sigma, 'lower');
     
     % Cost array
     cost_arr = [];
@@ -92,18 +93,16 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
         % Compute search direction
         switch lower( params.lin_solver)
             case 'qr'
-                % Reorder vars
-                p = colamd( J);
+                % Reorder vars                                
                 % Solve using QR decomposition
-                [ ~, R] = qr( R_sigma * [ J( :, p), -e], 0);
+                [ ~, R] = qr( L_sigma \ [ J, -e], 0);
                 % Search direction
-                d_k( p) = R( :, 1 : end - 1) \ R( :, end);
+                d_k = R( :, 1 : end - 1) \ R( :, end);
 
             case 'chol'
-                % Get weight matrix (inverse of covariance)                    
-                p = colamd( R_sigma * J);
-                R = chol( sparse( J(:, p)' * (R_sigma' * R_sigma) * J(:, p)));
-                d_k( p) = full( R \ ( R' \ (J( :, p)' * (R_sigma' * R_sigma) * (-e))));
+                % Get weight matrix (inverse of covariance)                                    
+                R = chol( sparse( J' * ( Sigma \ J)));
+                d_k = full( R \ ( R' \ (J' * ( Sigma \-e))));
             case '\'
                 d_k = -(J' * (Sigma \ J)) \ (J' * (Sigma \ e));        
         end
@@ -167,19 +166,6 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
         successful = true;
     end
 
-    % Covariance matrix
-    switch lower( params.lin_solver)
-        case 'qr'                           
-            L = sparse( 1 : length( p), p, 1);                    
-            joint_infm = ((R(:, 1 : end - 1) * L)' * ...
-                (R(:, 1 : end - 1) * L));
-        case 'chol'
-            % Computing joint information matrix  (L matrix is due to
-            % reordering of variables)
-            L = sparse( 1 : length( p), p, 1);
-            joint_infm = ((R * L)' * (R * L));
-    end
-    
     % Compute information matrix    
     infm_batch = J' * ( Sigma \ J);
     
@@ -313,7 +299,7 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
             err_gps( :, idx_gps_j) = C' * ( y_k - r);
             % Jacobians of measurement model 
             %   w.r.t. state
-            % NOTE: SEEMS TO BE WORKING WITHOUT THE - SIGN. I NEED TO FIGURE OUT
+            % NOTE: SEEMS TO BE WORKING WITHOUT THE '-' SIGN. I NEED TO FIGURE OUT
             % WHAT'S HAPPENING
             H_k = [ zeros( 2, 1), eye( 2)];
             jac_gps_x = [ jac_gps_x;
