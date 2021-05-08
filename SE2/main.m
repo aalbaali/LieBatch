@@ -11,7 +11,7 @@
 %   Amro Al-Baali
 %   08-May-2021
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear all;
+% clear all;
 close all;
 
 %% Settings
@@ -52,7 +52,12 @@ tic();
 switch lower(config_yml.init_method)
     case 'odom'
         X_initial = initOdom( X_prior, meas_vel, meas_gyro, t_sim);
-    case 'l-inekf'
+    case 'l-inekf'        
+        [ X_initial, P_initial] = initLinekf( data_struct.meas.prior, ...
+                                    data_struct.meas.velocity, ...
+                                    data_struct.meas.gyro, ...
+                                    data_struct.meas.gps, ...
+                                    t_sim);
 end
 disp('Done');
 toc();

@@ -21,6 +21,7 @@ function X_hat = initOdom( meas_prior, meas_vel, meas_gyro, t_sim)
     %
     %   Amro Al-Baali
     %   08-May-2021
+    % ----------------------------------
     
     % Get the number of poses
     K = length( t_sim);
