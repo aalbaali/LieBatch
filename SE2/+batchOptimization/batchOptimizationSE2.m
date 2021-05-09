@@ -102,7 +102,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
             case 'chol'
                 % Get weight matrix (inverse of covariance)                                    
                 R = chol( sparse( J' * ( Sigma \ J)));
-                d_k = full( R \ ( R' \ (J' * ( Sigma \-e))));
+                d_k = -full( R \ ( R' \ (J' * ( Sigma \e))));
             case '\'
                 d_k = -(J' * (Sigma \ J)) \ (J' * (Sigma \ e));        
         end
@@ -110,7 +110,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
         d_k = d_k(:);
         
         % Check if search direction is a descent direction
-        if J' * (Sigma \ e) > 0
+        if d_k' * J' * (Sigma \ e) >= 0
             warninig('Not a descent direction!');
         end
         
@@ -119,7 +119,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
         
         % Armijo back-tracking
         obj_val = (1/2) * e' * (Sigma\e); % Objective function value
-        grad_val = d_k' * (J' * e);
+        grad_val = d_k' * (J' * ( Sigma \ e));
         for lv2 = 0 : params.armijo_max_iteration-1
             alpha_k = beta^lv2;     
             % Increment X_k as to left-invariant error
@@ -295,13 +295,12 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
             
             % Error
             [ C, r] = SE2.decompose( X( :, :, kk));
-%             err_gps( :, idx_gps_j) = C' * ( y_k - r);
-            err_gps( :, idx_gps_j) = C' * ( y_k - r);
+            err_gps( :, idx_gps_j) = C' * ( y_k - r);            
             % Jacobians of measurement model 
             %   w.r.t. state
             % NOTE: SEEMS TO BE WORKING WITHOUT THE '-' SIGN. I NEED TO FIGURE OUT
             % WHAT'S HAPPENING
-            H_k = [ zeros( 2, 1), eye( 2)];
+            H_k = [ so2alg.wedge(1) * C' * ( y_k - r), eye( 2)];
             jac_gps_x = [ jac_gps_x;
                     kron( sparse( 1, kk, 1, 1, K), H_k)];
             

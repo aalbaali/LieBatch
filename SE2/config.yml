@@ -29,4 +29,4 @@ optim_params:
   #   - 'qr'
   #   - 'chol'
   #   - '\'
-  lin_solver            : '\'
+  lin_solver            : 'chol'
