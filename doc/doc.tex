@@ -1,0 +1,138 @@
+\documentclass[nobib]{tufte-handout}
+\usepackage{amro-common}
+\usepackage{amro-tufte}
+
+% Might prevent marginnotes from jumping to another page
+\def\mathnote#1{%
+  \tag*{\rlap{\hspace\marginparsep\smash{\parbox[t]{\marginparwidth}{%
+  \footnotesize#1}}}}
+}
+
+
+% % This command is needed for building in linux
+% \captionsetup{compatibility=false}
+
+\newcommand{\lplus}{\overset{{\scriptscriptstyle\mathrm{L}}}{\oplus}}
+\newcommand{\liplus}{\overset{{\scriptscriptstyle\mathrm{LI}}}{\oplus}}
+\newcommand{\rplus}{\overset{{\scriptscriptstyle\mathrm{R}}}{\oplus}}
+\newcommand{\riplus}{\overset{{\scriptscriptstyle\mathrm{RI}}}{\oplus}}
+% Ominus
+\newcommand{\lminus}{\overset{{\scriptscriptstyle\mathrm{L}}}{\ominus}}
+\newcommand{\liminus}{\overset{{\scriptscriptstyle\mathrm{LI}}}{\ominus}}
+\newcommand{\rminus}{\overset{{\scriptscriptstyle\mathrm{R}}}{\ominus}}
+\newcommand{\riminus}{\overset{{\scriptscriptstyle\mathrm{RI}}}{\ominus}}
+
+
+
+\title{Batch Estimation}
+\author{Amro Al~Baali}
+
+% Generates the index
+\usepackage{makeidx}
+\makeindex
+
+\setcounter{tocdepth}{2}
+
+
+\begin{document}
+    % \frontmatter
+    {    
+        \input{titlepage.tex}
+        % \forceheader{Contents}
+        \tableofcontents
+        \clearpage
+        % \thispagestyle{empty}
+        % \addtocontents{toc}{\protect\thispagestyle{empty}}
+    }
+    % \mainmatter
+
+    \section{Why this document?}
+    This document will be used as a guide to batch estimation on design variables that live in Lie groups. It'll be assumed that the random variables follow a Gaussian distribution. Therefore, the state estimation problem boils down to some least squares problem.
+
+    \section{Linear least squares}
+    Linear least squares is a special type of unconstrained optimization problem. It has the form
+    \begin{align}
+        \label{eq:optim problem linear least squares}
+        \min_{\mbf{x}\in\rnums^{n}} 
+        &\f{1}{2}\left( \mbf{A} \mbf{x} - \mbf{b} \right)^{\trans}\left( \mbf{A}\mbf{x} - \mbf{b} \right).
+    \end{align}
+    \marginnote[-1cm]{The error function is really \emph{affince}, but that's how it is.}
+    The objective function can be expanded to a quadratic form
+    \begin{align}
+        J(\mbf{x}) 
+        &= \f{1}{2}\left( \mbf{A} \mbf{x} - \mbf{b} \right)^{\trans}\left( \mbf{A}\mbf{x} - \mbf{b} \right)\\
+        &= \f{1}{2}\mbf{x}^{\trans}\mbf{A}^{\trans}\mbf{A}\mbf{x} - \mbf{b}^{\trans}\mbf{A}\mbf{x} + \f{1}{2}\mbf{b}^{\trans}\mbf{b}
+    \end{align}
+    which is a \emph{convex} function in $\mbf{x}$. Furthermore, the objective function is \emph{strongly} quadratic function if $\mbf{A}^{\trans}\mbf{A}$ is positive definite, which occurs if $\mbf{A}$ has full \emph{column rank}. \sidenote{This assumption is usually valid since it is common to have more measurements than the number of design variables.}
+
+    If $\mbf{A}$ is full rank, then the optimization problem \eqref{eq:optim problem linear least squares} has a unique minimizer and is given by solving the linear system
+    \begin{align}
+        \label{eq:linear least squares normal equations}
+        \mbf{A}^{\trans}\mbf{A}\mbf{x}^{\star} &= \mbf{A}^{\trans}\mbf{b}.
+    \end{align}
+    \marginnote[-1cm]{This equation is referred to as the \emph{normal equations} \cite{Dellaert_Factor_2017}.}
+
+    There are efficient ways to solve \eqref{eq:linear least squares normal equations} than inverting $\mbf{A}^{\trans}\mbf{A}$. These include Cholesky and QR factorizations \cite{Golub_Matrix_2013,Dellaert_Factor_2017}.
+
+    \section{Euclidean nonlinear least squares}
+    Nonlinear least squares optimization problem is given by
+    \begin{align}
+        \min_{\mbf{x}\in\mbf{R}^{n}} \f{1}{2}\mbf{e}(\mbf{x})^{\trans}\mbf{e}(\mbf{x}),
+    \end{align}
+    where $\mbf{e} : \rnums^{n} \to \rnums^{m}$ is some nonlinear \emph{error function}.
+
+    One way to solve this optimization iteratively is by linearizing the error function $\mbf{e}(\mbf{x})$ at some operating point $\mbfbar{x}$. This results in the Gauss-Newton equation \cite{Barfoot_State_2017a,Dellaert_Factor_2017}.
+
+    First, define the error on the optimizer. That is, let
+    \begin{align}
+        \label{eq:Euclidean NLS error}
+        \mbf{x} &= \mbfbar{x} + \delta\mbf{x},
+    \end{align}
+    where $\mbfbar{x}$ is some operating point.\sidenote{The operating point will be updated at each iteration.} Plugging the error definition \eqref{eq:Euclidean NLS error} into the error function gives
+    \begin{align}
+        \mbf{e}(\mbf{x}) &= \mbf{e}(\mbfbar{x} +\delta\mbf{x})\\
+        \label{eq:Euclidea NLS perturbed error}
+        &\approx \mbf{e}(\mbfbar{x}) + \mbf{J}\delta\mbf{x},
+    \end{align}
+    where $\mbf{J}\in\rnums^{m\times n}$ is the Jacobian of the error function $\mbf{e}$ with respect to its design variables $\mbf{x}$.
+
+    Plugging the perturbed error function \eqref{eq:Euclidea NLS perturbed error} into the objective function gives 
+    \begin{align}
+        \tilde{J}(\delta\mbf{x}) &\coloneqq J(\mbfbar{x} + \delta\mbf{x})\\
+        &= \f{1}{2}\mbf{e}(\mbfbar{x} + \delta\mbf{x})^{\trans}\mbf{e}(\mbfbar{x} + \delta\mbf{x})\\
+        &\approx
+        \f{1}{2}\left( e(\mbfbar{x}) + \mbf{J}\delta\mbf{x} \right)^{\trans} \left( \mbf{e}(\mbfbar{x}) + \mbf{J}\delta\mbf{x} \right)\\
+        &= \f{1}{2}\delta\mbf{x}^{\trans}\mbf{J}^{\trans}\mbf{J}\delta\mbf{x} + \mbf{e}(\mbfbar{x})^{\trans}\mbf{J}\delta\mbf{x} + \f{1}{2}\mbf{e}(\mbfbar{x})^{\trans}\mbf{e}(\mbfbar{x})
+    \end{align}
+    which is a quadratic\sidenote{Quadratic in $\delta\mbf{x}$.} approximation of the objective function.
+
+    If $\mbf{J}$ has full column rank, then $\tilde{J}(\delta\mbf{x})$ is a strongly quadratic function. The minimizer of $\tilde{J}(\delta\mbf{x})$ is then given by the solving the system of equations
+    \begin{align}
+        \mbf{J}^{\trans}\mbf{J}\delta\mbf{x}^{\star} &= -\mbf{J}^{\trans}\mbf{e}(\mbfbar{x}).
+    \end{align}
+    Again, this system of equations can be solved efficiently using Cholesky and QR factorizations.
+
+    Finally, using the error definition \eqref{eq:Euclidea NLS perturbed error}, the operating point can be updated using
+    \begin{align}
+        \mbfbar{x}^{(j+1)} &= \mbfbar{x}^{(j)} + \delta\mbf{x}^{\star},
+    \end{align}
+    where the superscript $(j)$ is added to denote the Gauss-Newton iteration.
+
+    Gauss-Newton may perform poorly if the residual is large \cite{Nocedal_Numerical_2006,Fletcher_Practical_1987}, thus it's advisable to use line search methods when updating the operating point. That is, use
+    \begin{align}
+        \mbfbar{x}^{(j+1)} &= \mbfbar{x}^{(j)} + \alpha^{(j)}\delta\mbf{x}^{\star},
+    \end{align}
+    where $\alpha^{(j)}$ is a step-length computed using some heuristics like backtracking \cite{Nocedal_Numerical_2006}.
+
+    Another popular method is Levenberg-Marquardt \cite{Dellaert_Factor_2017,Nocedal_Numerical_2006} which can be thought of as a damped version of Gauss-Newton.
+
+    
+    \section{Non-Euclidean nonlinear least squares}
+    
+
+    \clearpage
+    % \backmatter
+    \bibliography{references}
+    % \bibliographystyle{plainnat}
+    \bibliographystyle{IEEEtran}
+\end{document}
