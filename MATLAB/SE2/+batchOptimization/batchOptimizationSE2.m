@@ -111,7 +111,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
         
         % Check if search direction is a descent direction
         if d_k' * J' * (Sigma \ e) >= 0
-            warninig('Not a descent direction!');
+            warning('Not a descent direction!');
         end
         
         % Reshape search direction 
@@ -205,6 +205,7 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, s
     jac_err = [ jac_prior_n;
                 jac_odom_w;
                 jac_gps_n];
+   
             
     % Now, the covariances on the random variables
     %   Prior
@@ -219,7 +220,7 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, s
     cov_gps   = sparse( blkdiag3d( struct_gps.cov));
     
     % Augment covariances (in the block-diagonal sense)
-    cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps);
+    cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps);    
     
     % Finally, compute the covariances on the error function
     cov_err = (jac_err * cov_rvs * jac_err');

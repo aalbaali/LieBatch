@@ -11,8 +11,8 @@
 %   Amro Al-Baali
 %   08-May-2021
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear all;
-close all;
+% clear all;
+% close all;
 
 %% Settings
 % Add project paths
@@ -28,6 +28,7 @@ addprojectpaths();
 config_yml = YAML.read( 'config.yml');
 
 %% Load data
+% Load noisy measurements (.mat file)
 data_struct = load( config_yml.filename_data).data_struct;
 
 % Simulation
@@ -129,4 +130,32 @@ for lv1 = 1 : 3
 end
 xlabel('$t_{k}$ [s]', 'Interpreter', 'latex', 'FontSize', 14);
 
+%% Plot trajectory
+% Get states
+X_gt_states( K)     = StateSE2();
+X_kf_states( K)     = StateSE2(); 
+X_batch_states( K) = StateSE2();
 
+for kk = 1 : K
+    % Ground truth
+    X_gt_states( kk).state = X_gt( :, :, kk);
+    X_gt_states( kk).time  = t_sim( kk);
+    
+    % Filter estimates
+    X_kf_states( kk).state = X_kf( :, :, kk);
+    X_kf_states( kk).time  = t_sim( kk);
+    
+    % Batch estimates
+    X_batch_states( kk).state = X_batch( :, :, kk);
+    X_batch_states( kk).time  = t_sim (kk);
+end
+
+col_kf    = matlabColors( 'orange');
+col_batch = matlabColors( 'blue');
+
+figure; 
+plotMlgPose( X_gt_states, '-', matlabColors('grey'));
+hold on;
+plotMlgPose( X_kf_states, '-.', col_kf);
+plotMlgPose( X_batch_states, '-.', col_batch);
+legend({'Ground truth', 'L-InEKF', 'Batch'}, 'Interpreter', 'latex', 'FontSize', 14);
