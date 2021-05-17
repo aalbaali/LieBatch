@@ -1,28 +1,6 @@
 cmake_minimum_required( VERSION 3.10)
 project(example_SE2)
 
-# Append path with Config.cmake dirs/files
-
-# Find the RandomVariable directory
-find_package(g2o REQUIRED)
-find_package(InEKF)
-find_package(RandomVariable)
-find_package(manif REQUIRED)
-find_package(Eigen3)
-
-FIND_PATH(CSPARSE_INCLUDE_DIR NAMES cs.h
-  PATHS
-  /usr/include/suitesparse
-  /usr/include
-  /opt/local/include
-  /usr/local/include
-  /sw/include
-  /usr/include/ufsparse
-  /opt/local/include/ufsparse
-  /usr/local/include/ufsparse
-  /sw/include/ufsparse
-)
-
 # Add the SE2 library
 add_library(example_se2_lib STATIC
             vertex_se2.cpp vertex_se2.h
@@ -51,10 +29,6 @@ target_link_libraries(main
     InEKF::SE2
     example_se2_lib
   )
-
-  # target_include_directories(main PUBLIC 
-  # ${CSPARSE_INCLUDE_DIR}
-  # )
 
 # Set required C++ standard flag
 set_property(TARGET main PROPERTY CXX_STANDARD 17)
