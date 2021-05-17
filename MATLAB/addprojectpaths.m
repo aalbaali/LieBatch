@@ -13,4 +13,7 @@ function addprojectpaths()
     
     % Add utils
     addpath( 'Utils');
+    
+    addpath( genpath( ...
+        'G:\My Drive\Professional\Code_base\External\MATLAB\YAMLMatlab_0.4.3'));
 end
