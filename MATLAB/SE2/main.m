@@ -25,8 +25,8 @@ addprojectpaths();
 % The options so far are
 %   - odom (odometry)
 %   - L-InEKF (Left-invariant EKF)
-config_yml = YAML.read( 'config.yml');
-
+% config_yml = YAML.read( 'config.yml');
+config_yml = ReadYaml('config.yml');
 %% Load data
 % Load noisy measurements (.mat file)
 data_struct = load( config_yml.filename_data).data_struct;

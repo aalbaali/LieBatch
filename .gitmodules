@@ -1,0 +1,6 @@
+[submodule "C++/Extern/RandomVariable"]
+	path = C++/Extern/RandomVariable
+	url = git@github.com:aalbaali/RandomVariable.git
+[submodule "C++/Extern/cpp_filter"]
+	path = C++/Extern/cpp_filter
+	url = git@github.com:aalbaali/cpp_filter.git
