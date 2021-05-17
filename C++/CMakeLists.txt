@@ -5,10 +5,13 @@ project(Cpp_Batch)
 
 # Find the RandomVariable directory
 find_package(g2o REQUIRED)
-find_package(InEKF)
-find_package(RandomVariable)
+
 find_package(manif REQUIRED)
 find_package(Eigen3)
+
+# Add submodule dirs
+add_subdirectory(Extern/RandomVariable)
+add_subdirectory(Extern/cpp_filter)
 
 FIND_PATH(CSPARSE_INCLUDE_DIR NAMES cs.h
   PATHS
@@ -23,5 +26,9 @@ FIND_PATH(CSPARSE_INCLUDE_DIR NAMES cs.h
   /sw/include/ufsparse
 )
 
+# Include SE2 library (g2o types, vertices, edges, etc.)
+add_subdirectory(g2o_SE2_lib/)
+include_directories(g2o_SE2_lib)
+
 # Include examples
-add_subdirectory("g2o_SE2")
+add_subdirectory(g2o_SE2_example)
