@@ -21,6 +21,20 @@ namespace g2o{
             _error = _measurement - v1->estimate().translation();
         }
 
+        // Left-invariant Jacobian
+        //      Jacobian is given by [ C, [0;0]]
+        void UEdgeSE2Gps::linearizeOplus(){
+            // Get vertex
+            const VertexSE2* v1 = static_cast<const VertexSE2*>(_vertices[0]);
+
+            // Jacobian (in Eigen format)
+            JacYgps_Xk J;
+            J.setZero();
+            J.topLeftCorner(2, 2) = v1->estimate().rotation();
+
+            _jacobianOplusXi = J;
+        }
+
         bool UEdgeSE2Gps::read(std::istream& is)
         {
             // Vector2 p;
