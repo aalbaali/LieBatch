@@ -314,7 +314,6 @@
         \end{align}
         where the $1/T_{k-1}$ scale factor corrects for intensity of the noise.
     }
-    
 
     \subsection{GPS measurement model}
     The GPS measurement model is given by
@@ -355,6 +354,85 @@
         \mbf{X}_{k}\mbf{b} + \bbm \mbfrv{n}_{k} \\ 0 \ebm.
     \end{align}
 
+    \subsection{Process model error functions and Jacobians}
+    The left-invariant error on the process model is given by
+    \begin{align}
+        \mbf{e}^{\mathrm{odom}}_{k}\left( \mbf{X}_{k-1}, \mbf{X}_{k} \right) &= 
+        \Log\left( \mbf{X}_{k}\inv\mbf{X}_{k-1}\mbs{\Xi}_{k-1} \right)\\
+        \log\left( \mbf{X}_{k}\inv\mbf{X}_{k-1}\mbs{\Xi}_{k-1} \right)\contract.
+    \end{align}
+    The Jacobian of the error function with respect to the Lie algebra elements $\mbs{\xi}_{j}$ for $j=k - 1, k$, are then given by
+    \begin{fullwidth}    
+        \begin{align}
+            \mbf{e}^{\mathrm{odom}}_{k}
+              \left( \mbf{X}_{k-1}, \mbf{X}_{k} \right) 
+            &=
+            \mbf{e}^{\mathrm{odom}}_{k}
+              \left( \mbfbar{X}_{k-1}\liplus\mbs{\xi}_{k-1}, \mbfbar{X}_{k} \liplus\mbs{\xi}_{k}\right) \\
+            &=
+            \Log\left( \Exp(\mbs{\xi}_{k})
+              \mbfbar{X}_{k}\inv
+              \mbfbar{X}_{k-1}
+              \Exp(-\mbs{\xi}_{k-1})
+              \mbs{\Xi}_{k-1} 
+            \right)\\
+            &= 
+            \Log\left( 
+              \Exp(\mbs{\xi}_{k})
+              \mbfbar{X}_{k}\inv
+              \mbfbar{X}_{k-1}
+              \mbs{\Xi}_{k-1}
+              \mbs{\Xi}_{k-1}\inv
+              \Exp(-\mbs{\xi}_{k-1})
+              \mbs{\Xi}_{k-1} 
+            \right)\\
+            &= 
+            \Log\left( 
+              \Exp(\mbs{\xi}_{k})
+              \mbfbar{X}_{k}\inv
+              \mbfbar{X}_{k-1}
+              \mbs{\Xi}_{k-1}
+              \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}
+              \mbs{\xi}_{k-1})
+            \right)\\
+            &= 
+            \Log\left( \Exp(\mbs{\xi}_{k})\Exp\left( \mbfbar{e}^{\mathrm{odom}}_{k}\right)\Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}\mbs{\xi}_{k-1})\right)\\
+            &\approx
+            \mbfbar{e}^{\mathrm{odom}}_{k} + 
+            \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
+            \delta\mbs{\xi}_{k} 
+            -\mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
+            \Adj{\mbs{\Xi}_{k-1}\inv}
+            \delta\mbs{\xi}_{k-1}
+            % &= \Log\left(  \right)
+        \end{align}
+        where 
+        \begin{align}
+            \mbfbar{e}^{\mathrm{odom}}_{k} 
+            &\coloneqq \mbf{e}^{\mathrm{odom}}_{k}\left( \mbfbar{X}_{k-1}, \mbfbar{X}_{k} \right),
+        \end{align}
+        and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017a}.
+    \end{fullwidth}    
+
+    The Jacobians of the odometry error with respect to the Lie algebra perturbations are then given by
+    \begin{align}
+        \mbf{J}
+            ^{\mbf{e}
+                ^{\mathrm{odom}}
+                _{k}}
+            _{\mbs{\xi}_{k-1}} 
+        &= 
+        -\mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
+        \Adj{\mbs{\Xi}_{k-1}\inv}
+        , \\
+        \mbf{J}
+            ^{\mbf{e}
+                ^{\mathrm{odom}}
+                _{k}}
+            _{\mbs{\xi}_{k}} 
+        &= 
+        \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv.        
+    \end{align}
     
 
     \clearpage
