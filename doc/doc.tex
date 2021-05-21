@@ -1,6 +1,16 @@
-\documentclass[nobib]{tufte-handout}
+\documentclass[ nobib, nofonts, notoc]{tufte-handout}
 \usepackage{amro-common}
 \usepackage{amro-tufte}
+\makeatletter
+% Remove paragraph indentation
+\renewcommand{\@tufte@reset@par}{%
+  \setlength{\RaggedRightParindent}{0.0pc}%
+  \setlength{\JustifyingParindent}{0.0pc}%
+  \setlength{\parindent}{0pc}%
+  \setlength{\parskip}{\baselineskip}%
+}
+\@tufte@reset@par
+\makeatother
 
 % Might prevent marginnotes from jumping to another page
 \def\mathnote#1{%
@@ -74,6 +84,36 @@
 
     There are efficient ways to solve \eqref{eq:linear least squares normal equations} than inverting $\mbf{A}^{\trans}\mbf{A}$. These include Cholesky and QR factorizations \cite{Golub_Matrix_2013,Dellaert_Factor_2017}.
 
+
+    \subsection{Weighted least squares}
+    Most often, weighted least squares optimization is used where the objective function is of the form
+    \begin{align}
+        \label{eq:weighted least squares: objective function using W}
+        J(\mbf{x}) &= \f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{W}\left(  \mbf{A}\mbf{x} - \mbf{b}\right),
+    \end{align}
+    where $\mbf{W}=\mbf{W}^{\trans}>0$ is a symmetric positive definite matrix. 
+    This form arises naturally in the maximum a posteriori (MAP) estimator over normally distributed measurements $\mbfrv{b}\sim\mc{N}\left( \mbf{b}, \mbs{\Sigma} \right)$, where the weight matrix is assigned $\mbf{W} = \mbs{\Sigma}\inv$ \cite{Barfoot_State_2017a}.
+
+    However, since the weight matrix is positive definite, then the Cholesky decomposition can be used so that
+    \begin{align}
+        \mbf{L}^{\trans}\mbf{L} &= \mbf{W},
+    \end{align}
+    where $\mbf{L}$ is a lower triangular matrix. The $\mbf{L}$ matrix can then be inserted into the objective function \eqref{eq:weighted least squares: objective function using W} which results in
+    \begin{align}
+        J(\mbf{x}) 
+        &= \f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{W}\left(  \mbf{A}\mbf{x} - \mbf{b}\right)\\
+        &=\f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{L}^{\trans}\mbf{L}\left(  \mbf{A}\mbf{x} - \mbf{b}\right)\\
+        &= \f{1}{2}\left( \mbf{L}\mbf{A}\mbf{x} - \mbf{L}\mbf{b} \right)^{\trans}\left( \mbf{L}\mbf{A}\mbf{x} - \mbf{L}\mbf{b}\right)\\
+        &= \f{1}{2}\left( \mbftilde{A}\mbf{x} - \mbftilde{b} \right)^{\trans}\left( \mbftilde{A}\mbf{x} - \mbftilde{b}\right),
+    \end{align}
+    where 
+    \begin{align}
+        \mbftilde{A} &= \mbf{L}\mbf{A},\\
+        \mbftilde{b} &= \mbf{L}\mbf{b}.
+    \end{align}
+    The resulting form is a standard linear least squares problem.
+    Therefore, without loss of generality, the least squares problem can be assumed to be of the form \eqref{eq:optim problem linear least squares}.
+
     \section{Euclidean nonlinear least squares}
     Nonlinear least squares optimization problem is given by
     \begin{align}
@@ -128,6 +168,62 @@
 
     
     \section{Non-Euclidean nonlinear least squares}
+    If the design variables\sidenote{Elements of Lie groups will be denoted by upper case boldface letters.} $\mbf{X}$ are elements of non-Euclidean space, say elements of a Lie group $G$,\sidenote{For example, the Special Euclidean group of rotations $SO(3)$.} then the Euclidean addition operator `$+$' wouldn't necessarily work.
+    This complicates things a little bit, and a more generalized approach must be taken.
+    
+    The optimization problem will first take the form
+    \begin{align}
+        \min_{\mbf{X}\in G} \f{1}{2}\mbf{e}(\mbf{X})^{\trans}\mbf{e}(\mbf{X}),
+    \end{align}
+    where $\mbf{e} : G \to \mbf{R}^{m}$. 
+
+    The optimization problem can still be solved using Gauss-Newton method. 
+    As discussed in the previous section, the Jacobian of the error function with respect to the design variable is needed to compute the search direction. 
+    But what does that look like when the design variable is an element of a Lie group?
+    A generalized `addition' operator $\oplus$' is used. 
+    
+    For example, let $\mbf{X}\in SO(3)$ be an element of the $SO(3)$ group. 
+    Then the element $\mbf{X}$ can be perturbed by the column matrix $\mbs{\xi}\in\rnums^{3}$ that lives in the Euclidean space isomorphic to the tangent space $\mf{so}(3)$. 
+    The left-invariant increment operator `$\liplus$' over $SO(3)$ is then defined as
+    \begin{align}
+        \mbf{X} \liplus \mbs{\xi} &\triangleq \mbf{X}\exp(-\mbs{\xi}\crossop),
+    \end{align}    
+     $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017a}
+    \begin{align}
+        \bbm
+            \xi_{1}\\
+            \xi_{2}\\
+            \xi_{3}
+        \ebm\crossop
+        &\triangleq
+        \bbm
+            0 & -\xi_{3} & \xi_{2} \\ 
+            \xi_{3} & 0 & -\xi_{1}\\
+            -\xi_{2} & \xi_{1} & 0
+        \ebm.
+    \end{align}
+
+    Using such notation, the error function $\mbf{e}$ can be perturbed with respect to the Lie \emph{algebra} element (i.e., the $\mbs{\xi}\in\rnums^{n}$ element).
+    The error function can then be perturbed to be of the form
+    \begin{align}
+        \mbf{e}(\mbf{X}) 
+        &= \mbf{e}(\mbfbar{X}\oplus \delta\mbs{\xi})\\
+        % &\approx \mbf{e}(\mbfbar{X}) + \mbf{J}^{\mbf{e}}_{\mbs{\xi}}\delta\mbs{\xi},
+        &\approx \mbf{e}(\mbfbar{X}) + \mbf{J}\delta\mbs{\xi},
+    \end{align}
+    where $\mbf{J}\in\rnums^{m\times n}$.
+    Sola~\cite{Sola_micro_2019} provides a good explanation of Jacobians over Lie groups elements.
+    An example will be provided in the following sections.
+
+    Just as in the Euclidean case, the Jacobian can then be used to compute the search direction
+    \begin{align}
+        \mbf{J}^{\trans}\mbf{J}\delta\mbs{\xi}^{\star} &= -\mbf{J}^{\trans}\mbf{e}(\mbfbar{X}).
+    \end{align}
+    Finally, the design variable can be updated can be updated using
+    \begin{align}
+        \mbf{X}^{(j+1)} &= \mbf{X}^{(j)}\oplus \left( \alpha^{(j)}\delta\mbs{\xi}^{\star} \right),
+    \end{align}
+    where $\alpha^{(j)}$ is the step-length computed and $\oplus$ is the defined increment operation.\sidenote{The perturbations are left-, right-, left-invariant-, and right-invariant-perturbations \cite{Sola_micro_2019,Barrau_Invariant_2018}.}
     
 
     \clearpage

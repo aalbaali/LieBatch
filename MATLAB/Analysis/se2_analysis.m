@@ -26,7 +26,7 @@ struct_batch = importTextFile( file_name_batch);
 idx_range = 1 : min( length(struct_gt.time), length( struct_batch.time));
 
 plt_kf    = true;
-plt_batch = true;
+plt_batch = false;
 
 %% Normalize SE(2) objects
 % Re-normalize poses lambda function
@@ -100,8 +100,13 @@ P_batch = struct_batch.cov;
 
 % Colors
 %   Filter
-col_kf    = matlabColors( 'orange');
-col_batch = matlabColors( 'blue');
+col_kf_err    = matlabColors( 'blue');
+col_kf_var    = 'red';
+
+% col_kf_err    = matlabColors( 'orange');
+% col_kf_var    = matlabColors( 'orange');
+% col_batch_err = matlabColors( 'blue');
+% col_batch_var = matlabColors( 'blue');
 %   Error plots
 for kk = 1 : 3
     subplot(3, 1, kk);
@@ -109,26 +114,26 @@ for kk = 1 : 3
     if plt_kf
         %   Filter
         plot( time', dxi_kf(kk,:), 'LineWidth', 1.5, 'DisplayName', 'L-InEKF', ...
-            'Color', col_kf);
+            'Color', col_kf_err);
         plot(  time, - 3 * sqrt( squeeze( P_kf( kk, kk, idx_range))), '-',...
-            'LineWidth', 1.5, 'Color', col_kf, 'HandleVisibility', 'off');
+            'LineWidth', 1.5, 'Color', col_kf_var, 'HandleVisibility', 'off');
         plot(  time, 3 * sqrt( squeeze( P_kf( kk, kk, idx_range))), '-',...
-            'LineWidth', 1.5, 'Color', col_kf, 'HandleVisibility', 'off');
+            'LineWidth', 1.5, 'Color', col_kf_var, 'HandleVisibility', 'off');
     end
     
     if plt_batch
         %   Batch
         plot( time', dxi_batch(kk,:), 'LineWidth', 1.5, 'DisplayName', 'Batch', ...
-            'Color', col_batch);
+            'Color', col_batch_err);
         plot(  time, 3 * sqrt( squeeze( P_batch( kk, kk, idx_range))), '-.',...
-            'LineWidth', 1.5, 'Color', col_batch, 'HandleVisibility', 'off');
+            'LineWidth', 1.5, 'Color', col_batch_var, 'HandleVisibility', 'off');
         plot(  time, - 3 * sqrt( squeeze( P_batch( kk, kk, idx_range))), '-.',...
-            'LineWidth', 1.5, 'Color', col_batch, 'HandleVisibility', 'off');
+            'LineWidth', 1.5, 'Color', col_batch_var, 'HandleVisibility', 'off');
     end
     
     % y-labels
     if kk == 1
-        legend({'L-InEKF', 'Batch'}, 'Interpreter', 'latex', 'FontSize', 14);
+%         legend('Interpreter', 'latex', 'FontSize', 14);
         ylabel( sprintf('$\\delta \\xi_{%i}$ [rad]', kk),...
                         'Interpreter', 'latex', 'FontSize', 14);
     else
@@ -140,12 +145,13 @@ xlabel( '$t_{k}$ [s]', 'Interpreter', 'latex', 'FontSize', 14);
 
 % Plot trajectory
 figure; 
-plotMlgPose( X_gt_states, '-', matlabColors('grey'));
+plotMlgPose( X_gt_states, '-', matlabColors('grey'), 'Displayname', 'Ground truth');
 hold on;
 if plt_kf
-    plotMlgPose( X_kf_states, '-.', col_kf);
+    plotMlgPose( X_kf_states, '-.', col_kf_err, 'Displayname', 'L-InEKF');
 end
 if plt_batch
-    plotMlgPose( X_batch_states, '-.', col_batch);
+    plotMlgPose( X_batch_states, '-.', col_batch_err, 'Displayname', 'Batch');
 end
-legend({'Ground truth', 'L-InEKF', 'Batch'}, 'Interpreter', 'latex', 'FontSize', 14);
+% legend({'Ground truth', 'L-InEKF', 'Batch'}, 'Interpreter', 'latex', 'FontSize', 14);
+legend('Interpreter', 'latex', 'FontSize', 14);

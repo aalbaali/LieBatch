@@ -8,6 +8,7 @@
 #include "vertex_se2.h"
 
 // #include "g2o_tutorial_slam_R2_api.h"
+#include "g2o/config.h"
 #include "g2o/core/base_unary_edge.h"
 
 namespace g2o {
@@ -33,6 +34,8 @@ namespace g2o {
 
         virtual bool read(std::istream& is);
         virtual bool write(std::ostream& os) const;
+
+        // void linearizeOplus();
     };
   }
 } // end namespace
