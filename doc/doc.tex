@@ -56,9 +56,15 @@
     }
     % \mainmatter
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Why this document?
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \section{Why this document?}
     This document will be used as a guide to batch estimation on design variables that live in Lie groups. It'll be assumed that the random variables follow a Gaussian distribution. Therefore, the state estimation problem boils down to some least squares problem.
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Linear least squares
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \section{Linear least squares}
     Linear least squares is a special type of unconstrained optimization problem. It has the form
     \begin{align}
@@ -114,6 +120,9 @@
     The resulting form is a standard linear least squares problem.
     Therefore, without loss of generality, the least squares problem can be assumed to be of the form \eqref{eq:optim problem linear least squares}.
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Euclidean nonlinear least squares
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \section{Euclidean nonlinear least squares}
     Nonlinear least squares optimization problem is given by
     \begin{align}
@@ -166,7 +175,9 @@
 
     Another popular method is Levenberg-Marquardt \cite{Dellaert_Factor_2017,Nocedal_Numerical_2006} which can be thought of as a damped version of Gauss-Newton.
 
-    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Non-Euclidean nonlinear least squares
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \section{Non-Euclidean nonlinear least squares}
     If the design variables\sidenote{Elements of Lie groups will be denoted by upper case boldface letters.} $\mbf{X}$ are elements of non-Euclidean space, say elements of a Lie group $G$,\sidenote{For example, the Special Euclidean group of rotations $SO(3)$.} then the Euclidean addition operator `$+$' wouldn't necessarily work.
     This complicates things a little bit, and a more generalized approach must be taken.
@@ -224,6 +235,126 @@
         \mbf{X}^{(j+1)} &= \mbf{X}^{(j)}\oplus \left( \alpha^{(j)}\delta\mbs{\xi}^{\star} \right),
     \end{align}
     where $\alpha^{(j)}$ is the step-length computed and $\oplus$ is the defined increment operation.\sidenote{The perturbations are left-, right-, left-invariant-, and right-invariant-perturbations \cite{Sola_micro_2019,Barrau_Invariant_2018}.}
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % SE(2) Example
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \section[Example on the planar Special Euclidean group]{Example on $SE(2)$}
+    \begin{marginfigure}%
+        \includegraphics[width=\linewidth]{figs/Graphics/car_body.eps}
+        \caption{Robot with point $z$ relative to point $w$. The body frame $\rframe[b]$ is attached to the robot, and reference frame $\rframe[a]$ is the reference frame.}
+        \label{fig:car body}
+    \end{marginfigure}
+    %   
+    Consider a robot moving on a plan like the one displayed in \figref{fig:car body}. 
+    Let $z_{k}$ be a \emph{point} on attached to the robot and $w$ be a reference \emph{point}. 
+    Furthermore, let $\rframe[b_{k}]$ be the robot reference frame (at time $k$), and $\rframe[a]$ be the reference frame (e.g., some inertial frame).
+    The robot can then be described by the \emph{pose}
+    \begin{align}
+        \pose[z_{k}w][ab_{k}] &= 
+        \bbm
+            \dcm[ab_{k}] & \disp[z_{k}w][a] \\
+            \mbf{0} & 1
+        \ebm \in SE(2),
+    \end{align}
+    where $\dcm[ab_{k}]\in SO(2)$ and $\disp[z_{k}w][a]\in\rnums^{2}$. 
+    For simplicity and visual clarity, notation 
+    \begin{align}
+        \mbf{X}_{k} \coloneqq \pose[z_{k}w][ab_{k}]
+    \end{align}
+    will be used in this document.\footnote{The $\mbf{X}$ is usually reserved for `design variable' so the Lie group should hopefully be inferred from the context.}
+
+    \subsection{Process model}
+    The process model is given by \cite{Barfoot_State_2017a}
+    \begin{align}
+        \mbfdot{X}(t) &= \mbf{X}(t)\Exp( \mbf{u}(t))\Exp(\rv{\boldsymbol{{w}}}(t)),
+    \end{align}
+    where 
+    \begin{align}
+        \mbf{u}(t) 
+        &=
+        \bbm
+            \omega^{ba}_{b}(t)\\
+            \mbf{v}^{zw / a}_{a}(t)
+        \ebm,
+    \end{align}
+    are the \emph{interoceptive} measurements, and
+    \begin{align}
+        \rv{\boldsymbol{{w}}}(t) \sim \mc{GP}\left( \mbf{0}, \boldsymbol{Q}\delta(t-t') \right),
+    \end{align}
+    is a zero-mean white-noise Gaussian Process (GP) with power spectral density $\boldsymbol{Q}$ \cite{Barfoot_State_2017a}.
+
+    The discrete-time kinematics can be described by \sidenote{Checkout \cite{Barfoot_State_2017a} for a more complete derivation.}
+    \begin{align}
+        \mbf{X}_{k} 
+        &= \mbf{X}_{k-1}\Exp( T_{k-1} \mbf{u}_{k-1})\Exp(\mbfrv{w}_{k-1})\\
+        &= \mbf{X}_{k-1}\mbs{\Xi}_{k-1}\mbfrv{W}_{k-1},
+    \end{align}
+    where $T_{k-1}$ is the sampling period,
+    \begin{align}
+        \mbs{\Xi}_{k-1} 
+        &= \Exp(T_{k-1}\mbf{u}_{k-1})\\
+        &= \exp(T_{k-1}\mbf{u}_{k-1}\expand),\\    
+        \mbf{u}_{k-1}\expand 
+        &= 
+        \bbm
+            \left( \omega^{b_{k-1}a}_{b_{k-1}} \right)\crossop & \mbf{v}^{z_{k-1}w / a}_{a}\\
+            \mbf{0} & 0
+        \ebm,
+    \end{align}
+    and
+    \begin{align}
+        \mbf{w}_{k-1} \sim\mc{N}\left( \mbf{0}, \mbf{Q}_{k-1} \right),
+    \end{align}
+    is the process-noise and $\mbf{Q}_{k-1}$ is the process-noise covariance matrix. \sidenote[][-3cm]{
+        If Euler discretization is used to compute the process-noise covariance matrix $\mbf{Q}_{k-1}$, then a correction must be made. Specifically, the covariance matrix would be given by
+        \begin{align}
+            \mbf{Q}_{k-1} &= \f{T_{k-1}^{2}}{T_{k-1}}\boldsymbol{Q}\\
+            &= T_{k-1}\boldsymbol{Q},
+        \end{align}
+        where the $1/T_{k-1}$ scale factor corrects for intensity of the noise.
+    }
+    
+
+    \subsection{GPS measurement model}
+    The GPS measurement model is given by
+    \begin{align}
+        \mbf{y}_{k} &= \disp[z_{k}w][a] + \mbfrv{n}_{k},
+    \end{align}
+    where
+    \begin{align}
+        \mbfrv{n}_{k}\sim\mc{N}\left( \mbf{0}, \mbf{R}_{k} \right),
+    \end{align}
+    is measurement noise.
+
+    Another way to write the measurement function in terms of the Lie group element $\mbf{X}_{k}\in SE(2)$ is
+    \begin{align}
+        \bbm
+            \mbf{y}_{k}\\
+            1 
+        \ebm
+        &=
+        \bbm
+        \disp[z_{k}w][a] + \mbfrv{n}_{k}\\
+        1
+        \ebm\\
+        &=
+        \bbm
+            \dcm[ab_{k}] & \disp[z_{k}w][a] \\ 
+            \mbf{0} & 1
+        \ebm
+        \bbm
+            \mbf{0} \\ 1
+        \ebm
+        + 
+        \bbm
+            \mbfrv{n}_{k}\\
+            0
+        \ebm\\
+        &= 
+        \mbf{X}_{k}\mbf{b} + \bbm \mbfrv{n}_{k} \\ 0 \ebm.
+    \end{align}
+
     
 
     \clearpage
