@@ -10,13 +10,21 @@
   \setlength{\parskip}{\baselineskip}%
 }
 \@tufte@reset@par
+
+% Paragraph indentation and separation for marginal text
+\renewcommand{\@tufte@margin@par}{%
+  \setlength{\RaggedRightParindent}{0.5pc}%
+  \setlength{\JustifyingParindent}{0.5pc}%
+  \setlength{\parindent}{0.5pc}%
+  \setlength{\parskip}{0pt}%
+}
 \makeatother
 
-% Might prevent marginnotes from jumping to another page
-\def\mathnote#1{%
-  \tag*{\rlap{\hspace\marginparsep\smash{\parbox[t]{\marginparwidth}{%
-  \footnotesize#1}}}}
-}
+% % Might prevent marginnotes from jumping to another page
+% \def\mathnote#1{%
+%   \tag*{\rlap{\hspace\marginparsep\smash{\parbox[t]{\marginparwidth}{%
+%   \footnotesize#1}}}}
+% }
 
 
 % % This command is needed for building in linux
@@ -284,7 +292,7 @@
     \end{align}
     is a zero-mean white-noise Gaussian Process (GP) with power spectral density $\boldsymbol{Q}$ \cite{Barfoot_State_2017a}.
 
-    The discrete-time kinematics can be described by \sidenote{Checkout \cite{Barfoot_State_2017a} for a more complete derivation.}
+    The discrete-time kinematics can be described by\sidenote{Checkout \cite{Barfoot_State_2017a} for a more complete derivation.}
     \begin{align}
         \mbf{X}_{k} 
         &= \mbf{X}_{k-1}\Exp( T_{k-1} \mbf{u}_{k-1})\Exp(\mbfrv{w}_{k-1})\\
@@ -315,6 +323,9 @@
         where the $1/T_{k-1}$ scale factor corrects for intensity of the noise.
     }
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % GPS measurement model
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{GPS measurement model}
     The GPS measurement model is given by
     \begin{align}
@@ -354,27 +365,63 @@
         \mbf{X}_{k}\mbf{b} + \bbm \mbfrv{n}_{k} \\ 0 \ebm.
     \end{align}
 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Process model error functions and Jacobians
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{Process model error functions and Jacobians}
     The left-invariant error on the process model is given by
     \begin{align}
-        \mbf{e}^{\mathrm{odom}}_{k}\left( \mbf{X}_{k-1}, \mbf{X}_{k} \right) &= 
-        \Log\left( \mbf{X}_{k}\inv\mbf{X}_{k-1}\mbs{\Xi}_{k-1} \right)\\
-        \log\left( \mbf{X}_{k}\inv\mbf{X}_{k-1}\mbs{\Xi}_{k-1} \right)\contract.
+        \mbf{e}^{\mathrm{odom}}_{k}\left( 
+            \mbf{X}_{k-1},
+            \mbf{X}_{k},
+            \mbf{w}_{k-1}
+        \right) 
+        &= 
+        \Log
+        \left( 
+            \mbf{X}_{k}\inv                
+            \mbf{X}_{k-1}
+            \mbs{\Xi}_{k-1}
+            \Exp(\mbf{w}_{k-1})
+        \right)\\
+        &= 
+        \log
+        \left( 
+            \mbf{X}_{k}\inv
+            \mbf{X}_{k-1}
+            \mbs{\Xi}_{k-1}
+            \Exp(\mbf{w}_{k-1})
+        \right)
+            \contract.
     \end{align}
-    The Jacobian of the error function with respect to the Lie algebra elements $\mbs{\xi}_{j}$ for $j=k - 1, k$, are then given by
+    The Jacobian of the error function with respect to the Lie algebra elements $\mbs{\xi}_{j}$ for $j=k - 1, k$ as well as with respect to the process noise can be computed by perturbing the error function. 
+    Specifically,
     \begin{fullwidth}    
         \begin{align}
             \mbf{e}^{\mathrm{odom}}_{k}
-              \left( \mbf{X}_{k-1}, \mbf{X}_{k} \right) 
+              \left( 
+                  \mbf{X}_{k-1},
+                  \mbf{X}_{k}, 
+                  \delta\mbf{w}_{k-1}
+              \right) 
             &=
             \mbf{e}^{\mathrm{odom}}_{k}
-              \left( \mbfbar{X}_{k-1}\liplus\mbs{\xi}_{k-1}, \mbfbar{X}_{k} \liplus\mbs{\xi}_{k}\right) \\
+              \left(
+                \mbfbar{X}_{k-1}
+                  \liplus
+                  \mbs{\xi}_{k-1}, 
+                \mbfbar{X}_{k}
+                  \liplus
+                  \mbs{\xi}_{k}, 
+                \delta\mbf{w}_{k-1}
+              \right) \\
             &=
             \Log\left( \Exp(\mbs{\xi}_{k})
               \mbfbar{X}_{k}\inv
               \mbfbar{X}_{k-1}
               \Exp(-\mbs{\xi}_{k-1})
               \mbs{\Xi}_{k-1} 
+              \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &= 
             \Log\left( 
@@ -385,6 +432,7 @@
               \mbs{\Xi}_{k-1}\inv
               \Exp(-\mbs{\xi}_{k-1})
               \mbs{\Xi}_{k-1} 
+              \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &= 
             \Log\left( 
@@ -394,9 +442,16 @@
               \mbs{\Xi}_{k-1}
               \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}
               \mbs{\xi}_{k-1})
+              \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &= 
-            \Log\left( \Exp(\mbs{\xi}_{k})\Exp\left( \mbfbar{e}^{\mathrm{odom}}_{k}\right)\Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}\mbs{\xi}_{k-1})\right)\\
+            \Log
+            \left(
+              \Exp(\mbs{\xi}_{k})
+              \Exp\left( \mbfbar{e}^{\mathrm{odom}}_{k}\right)
+              \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}\mbs{\xi}_{k-1})
+              \Exp(\delta\mbf{w}_{k-1})
+            \right)\\
             &\approx
             \mbfbar{e}^{\mathrm{odom}}_{k} + 
             \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
@@ -404,12 +459,25 @@
             -\mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
             \Adj{\mbs{\Xi}_{k-1}\inv}
             \delta\mbs{\xi}_{k-1}
-            % &= \Log\left(  \right)
+            \Exp(\delta\mbf{w}_{k-1})
+            \nonumber \\ 
+            &\mathrel{\phantom{=}} \negmedspace{}
+            + 
+            \mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
+            \delta\mbf{w}_{k-1},
         \end{align}
         where 
         \begin{align}
             \mbfbar{e}^{\mathrm{odom}}_{k} 
-            &\coloneqq \mbf{e}^{\mathrm{odom}}_{k}\left( \mbfbar{X}_{k-1}, \mbfbar{X}_{k} \right),
+            &\coloneqq 
+            \mbf{e}
+                ^{\mathrm{odom}}
+                _{k}
+                \left( 
+                  \mbfbar{X}_{k-1},
+                  \mbfbar{X}_{k}, 
+                  \mbf{0}
+                \right),
         \end{align}
         and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017a}.
     \end{fullwidth}    
@@ -431,10 +499,60 @@
                 _{k}}
             _{\mbs{\xi}_{k}} 
         &= 
-        \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv.        
+        \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv,       
     \end{align}
+    and the with respect to the process noise\sidenote{Or any random variable.} is given by
+    \begin{align}
+        \mbf{J}
+            ^{\mbf{e}
+                ^{\mathrm{odom}}
+                _{k}}
+            _{\mbf{w}_{k-1}} 
+        % &\coloneqq 
+        % \mbf{L}_{k-1}
+        % \\
+        &=
+        \mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv.
+    \end{align}
+    \marginnote[-1cm]{
+        This Jacobian of the process model error function w.r.t. process noise is usually denoted by $\mbf{L}_{k-1}$.
+    }
     
+    The covariance on the error function can the be (approximately) given by
+    \begin{align}
+        \cov{
+            \mbf{e}
+              ^{\mathrm{odom}}
+              _{k}
+            \left(
+              \mbf{X}_{k-1},
+              \mbf{X}_{k},
+              \mbfrv{w}_{k-1}
+            \right)
+        }
+        &\approx
+        \mbf{J}
+            ^{\mbf{e}
+                ^{\mathrm{odom}}
+                _{k}}
+            _{\mbf{w}_{k-1}}
+        \mbf{Q}_{k-1}
+        {
+        \mbf{J}
+            ^{\mbf{e}
+                ^{\mathrm{odom}}
+                _{k}}
+            _{\mbf{w}_{k-1}}
+        }^{\trans}.
+    \end{align}
 
+    To find the answer, let's perturb the error function with respect to the process noise.
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % GPS measurement model error functions and Jacobians
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{GPS measurement model error functions and Jacobians}
+    
+    
     \clearpage
     % \backmatter
     \bibliography{references}
