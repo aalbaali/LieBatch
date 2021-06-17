@@ -7,6 +7,8 @@
 % clear all;
 % close all;
 
+%% Add paths
+run ../addprojectpaths;
 %% Load data
 % Ground truth file name
 file_name_gt = "\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\gt_states.txt";
@@ -26,7 +28,7 @@ struct_batch = importTextFile( file_name_batch);
 idx_range = 1 : min( length(struct_gt.time), length( struct_batch.time));
 
 plt_kf    = true;
-plt_batch = false;
+plt_batch = true;
 
 %% Normalize SE(2) objects
 % Re-normalize poses lambda function
@@ -103,10 +105,10 @@ P_batch = struct_batch.cov;
 col_kf_err    = matlabColors( 'blue');
 col_kf_var    = 'red';
 
-% col_kf_err    = matlabColors( 'orange');
-% col_kf_var    = matlabColors( 'orange');
-% col_batch_err = matlabColors( 'blue');
-% col_batch_var = matlabColors( 'blue');
+col_kf_err    = matlabColors( 'orange');
+col_kf_var    = matlabColors( 'orange');
+col_batch_err = matlabColors( 'blue');
+col_batch_var = matlabColors( 'blue');
 %   Error plots
 for kk = 1 : 3
     subplot(3, 1, kk);
@@ -133,7 +135,7 @@ for kk = 1 : 3
     
     % y-labels
     if kk == 1
-%         legend('Interpreter', 'latex', 'FontSize', 14);
+        legend('Interpreter', 'latex', 'FontSize', 14);
         ylabel( sprintf('$\\delta \\xi_{%i}$ [rad]', kk),...
                         'Interpreter', 'latex', 'FontSize', 14);
     else

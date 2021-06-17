@@ -16,4 +16,7 @@ function addprojectpaths()
     
     addpath( genpath( ...
         'G:\My Drive\Professional\Code_base\External\MATLAB\YAMLMatlab_0.4.3'));
+    
+    % Add path to RandomVariable IO
+    addpath('\\wsl$\Ubuntu-20.04\home\aa\Documents\Code_base\Local\RandomVariable\MATLAB_txt_IO');
 end

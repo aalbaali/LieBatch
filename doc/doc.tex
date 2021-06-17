@@ -209,7 +209,7 @@
     \begin{align}
         \mbf{X} \liplus \mbs{\xi} &\triangleq \mbf{X}\exp(-\mbs{\xi}\crossop),
     \end{align}
-     $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017a}
+        $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017a}
     \begin{align}
         \bbm
             \xi_{1}\\
@@ -222,6 +222,16 @@
             \xi_{3} & 0 & -\xi_{1}\\
             -\xi_{2} & \xi_{1} & 0
         \ebm.
+    \end{align}
+    Similarly, the left-invariant ``subtraction'' is given by
+    \begin{align}
+      \label{eq:liminus definition}
+      \mbf{X}_{k} \liminus \mbfhat{X}_{k}
+      &\triangleq
+      \log\left( 
+          \mbf{X}_{k}\inv
+          \mbfhat{X}_{k}
+       \right)^{\vee}.
     \end{align}
 
     Using such notation, the error function $\mbf{e}$ can be perturbed with respect to the Lie \emph{algebra} element (i.e., the $\mbs{\xi}\in\rnums^{n}$ element).
@@ -369,9 +379,9 @@
     \end{align}
     where
     \begin{align}
-      \mbf{b}
-      &=
-      \bbm 0 & 0 & 1 \ebm^{\trans}.
+        \mbf{b}
+        &=
+        \bbm 0 & 0 & 1 \ebm^{\trans}.
     \end{align}
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -408,58 +418,58 @@
     \begin{fullwidth}
         \begin{align}
             \mbf{e}^{\mathrm{odom}}_{k}
-              \left(
-                  \mbf{X}_{k-1},
-                  \mbf{X}_{k},
-                  \delta\mbf{w}_{k-1}
-              \right)
+                \left(
+                    \mbf{X}_{k-1},
+                    \mbf{X}_{k},
+                    \delta\mbf{w}_{k-1}
+                \right)
             &=
             \mbf{e}^{\mathrm{odom}}_{k}
-              \left(
+                \left(
                 \mbfbar{X}_{k-1}
-                  \liplus
-                  \mbs{\xi}_{k-1},
+                    \liplus
+                    \mbs{\xi}_{k-1},
                 \mbfbar{X}_{k}
-                  \liplus
-                  \mbs{\xi}_{k},
+                    \liplus
+                    \mbs{\xi}_{k},
                 \delta\mbf{w}_{k-1}
-              \right) \\
+                \right) \\
             &=
             \Log\left( \Exp(\mbs{\xi}_{k})
-              \mbfbar{X}_{k}\inv
-              \mbfbar{X}_{k-1}
-              \Exp(-\mbs{\xi}_{k-1})
-              \mbs{\Xi}_{k-1}
-              \Exp(\delta\mbf{w}_{k-1})
+                \mbfbar{X}_{k}\inv
+                \mbfbar{X}_{k-1}
+                \Exp(-\mbs{\xi}_{k-1})
+                \mbs{\Xi}_{k-1}
+                \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &=
             \Log\left(
-              \Exp(\mbs{\xi}_{k})
-              \mbfbar{X}_{k}\inv
-              \mbfbar{X}_{k-1}
-              \mbs{\Xi}_{k-1}
-              \mbs{\Xi}_{k-1}\inv
-              \Exp(-\mbs{\xi}_{k-1})
-              \mbs{\Xi}_{k-1}
-              \Exp(\delta\mbf{w}_{k-1})
+                \Exp(\mbs{\xi}_{k})
+                \mbfbar{X}_{k}\inv
+                \mbfbar{X}_{k-1}
+                \mbs{\Xi}_{k-1}
+                \mbs{\Xi}_{k-1}\inv
+                \Exp(-\mbs{\xi}_{k-1})
+                \mbs{\Xi}_{k-1}
+                \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &=
             \Log\left(
-              \Exp(\mbs{\xi}_{k})
-              \mbfbar{X}_{k}\inv
-              \mbfbar{X}_{k-1}
-              \mbs{\Xi}_{k-1}
-              \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}
-              \mbs{\xi}_{k-1})
-              \Exp(\delta\mbf{w}_{k-1})
+                \Exp(\mbs{\xi}_{k})
+                \mbfbar{X}_{k}\inv
+                \mbfbar{X}_{k-1}
+                \mbs{\Xi}_{k-1}
+                \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}
+                \mbs{\xi}_{k-1})
+                \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &=
             \Log
             \left(
-              \Exp(\mbs{\xi}_{k})
-              \Exp\left( \mbfbar{e}^{\mathrm{odom}}_{k}\right)
-              \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}\mbs{\xi}_{k-1})
-              \Exp(\delta\mbf{w}_{k-1})
+                \Exp(\mbs{\xi}_{k})
+                \Exp\left( \mbfbar{e}^{\mathrm{odom}}_{k}\right)
+                \Exp(-\Adj{\mbs{\Xi}_{k-1}\inv}\mbs{\xi}_{k-1})
+                \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &\approx
             \mbfbar{e}^{\mathrm{odom}}_{k} +
@@ -483,9 +493,9 @@
                 ^{\mathrm{odom}}
                 _{k}
                 \left(
-                  \mbfbar{X}_{k-1},
-                  \mbfbar{X}_{k},
-                  \mbf{0}
+                    \mbfbar{X}_{k-1},
+                    \mbfbar{X}_{k},
+                    \mbf{0}
                 \right),
         \end{align}
         and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017a}.
@@ -531,12 +541,12 @@
     \begin{align}
         \cov{
             \mbf{e}
-              ^{\mathrm{odom}}
-              _{k}
+                ^{\mathrm{odom}}
+                _{k}
             \left(
-              \mbf{X}_{k-1},
-              \mbf{X}_{k},
-              \mbfrv{w}_{k-1}
+                \mbf{X}_{k-1},
+                \mbf{X}_{k},
+                \mbfrv{w}_{k-1}
             \right)
         }
         &\approx
@@ -562,62 +572,62 @@
     \subsection{GPS measurement model error functions and Jacobians}
     Using the measurement model \eqref{eq:meas. model GPS Lie group}, the error function is given by
     \begin{align}
-      \label{eq:error function GPS}
-      \bbm
+        \label{eq:error function GPS}
+        \bbm
         \mbf{e}^{\mathrm{GPS}}_{k} \\
         0
-      \ebm
-      &=
-      \bbm
+        \ebm
+        &=
+        \bbm
         \mbf{y}_{k} \\
         1
-      \ebm
-      -
-      \mbf{X}_{k}\mbf{b}.
+        \ebm
+        -
+        \mbf{X}_{k}\mbf{b}.
     \end{align}
     Perturbing the above error function with respect to the state, using a left-invariant error/perturbation gives
     \begin{align}
-      \mbftilde{e}^{\mathrm{GPS}}_{k}
-      &=
-      \bbm
+        \mbftilde{e}^{\mathrm{GPS}}_{k}
+        &=
+        \bbm
         \mbf{e}^{\mathrm{GPS}}_{k} \\
         0
-      \ebm
-      \\
-      &=
-      \bbm
+        \ebm
+        \\
+        &=
+        \bbm
         \mbf{y}_{k} \\
         1
-      \ebm
-      -
-      \left(
+        \ebm
+        -
+        \left(
         \mbfbar{X}_{k}
         \liplus
         \mbs{\xi}_{k}
-      \right)\mbf{b}
-      \\
-      &=
-      \bbm
+        \right)\mbf{b}
+        \\
+        &=
+        \bbm
         \mbf{y}_{k} \\
         1
-      \ebm
-      -
-      \mbfbar{X}_{k}
-      \exp\left(-\mbs{\xi}_{k}^{\wedge}\right)
-      \mbf{b}
-      \\
-      &\approx
-      \bbm
+        \ebm
+        -
+        \mbfbar{X}_{k}
+        \exp\left(-\mbs{\xi}_{k}^{\wedge}\right)
+        \mbf{b}
+        \\
+        &\approx
+        \bbm
         \mbf{y}_{k} \\
         1
-      \ebm
-      -
-      \mbfbar{X}_{k}
-      \left(\eye-\mbs{\xi}_{k}^{\wedge}\right)
-      \mbf{b}
-      \\
-      &=
-      \underbrace{
+        \ebm
+        -
+        \mbfbar{X}_{k}
+        \left(\eye-\mbs{\xi}_{k}^{\wedge}\right)
+        \mbf{b}
+        \\
+        &=
+        \underbrace{
         \bbm
         \mbf{y}_{k} \\
         1
@@ -625,60 +635,89 @@
         -
         \mbfbar{X}_{k}
         \mbf{b}
-      }_{
-          \bar{\mbftilde{e}}^{\mathrm{GPS}}_{k}
-      }
-      +
-      \mbfbar{X}_{k}
-      \mbs{\xi}_{k}^{\wedge}
-      \mbf{b}
-      \\
-      &=
-      \bbm
+        }_{
+            \bar{\mbftilde{e}}^{\mathrm{GPS}}_{k}
+        }
+        +
+        \mbfbar{X}_{k}
+        \mbs{\xi}_{k}^{\wedge}
+        \mbf{b}
+        \\
+        &=
+        \bbm
         \mbfbar{e}^{\mathrm{GPS}}_{k}\\
         0
-      \ebm
-      +
-      \mbfbar{X}_{k}
-      \mbf{b}^{\odot}
-      \mbs{\xi}_{k}
-      \\
-      &=
-      \bbm
+        \ebm
+        +
+        \mbfbar{X}_{k}
+        \mbf{b}^{\odot}
+        \mbs{\xi}_{k}
+        \\
+        &=
+        \bbm
         \mbfbar{e}^{\mathrm{GPS}}_{k}\\
         0
-      \ebm
-      +
-      \bbm
+        \ebm
+        +
+        \bbm
         \mbf{0} & \dcmbar[ab_{k}] \\
-           0    & \mbf{0}
-      \ebm
-      \mbs{\xi}_{k}.
+            0    & \mbf{0}
+        \ebm
+        \mbs{\xi}_{k}.
     \end{align}
     Which results in
     \begin{align}
-      \mbf{e}^{\mathrm{GPS}}_{k}
-      &=
-      \mbfbar{e}^{\mathrm{GPS}}_{k}
-      +
-      \bbm
+        \mbf{e}^{\mathrm{GPS}}_{k}
+        &=
+        \mbfbar{e}^{\mathrm{GPS}}_{k}
+        +
+        \bbm
         \mbf{0} & \dcmbar[ab_{k}]
-      \ebm
-      \mbs{\xi}_{k}
+        \ebm
+        \mbs{\xi}_{k}
     \end{align}
     Therefore, the Jacobian of the GPS measurement error function \eqref{eq:error function GPS} is
     \begin{align}
-      \mbf{J}^{
-          \mbf{e}^{\mathrm{GPS}}_{k}
-       }_{\mbs{\xi}_{k}}
-       &=
-       \bbm
-         \mbf{0} &
-         \dcmbar[ab_{k}]
-       \ebm,
+        \mbf{J}^{
+            \mbf{e}^{\mathrm{GPS}}_{k}
+        }_{\mbs{\xi}_{k}}
+        &=
+        \bbm
+            \mbf{0} &
+            \dcmbar[ab_{k}]
+        \ebm,
     \end{align}
     where $\dcmbar[ab_{k}]$ is the DCM of the robot at time $k$ at the linearization (i.e., at a Gauss-Newton iteration) point.
 
+    \clearpage
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Results on g2o
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    \subsection{Results}
+    Figures~\ref{fig:se2_example_trajectories.eps}-\ref{fig:se2_example_error_plots.eps} show the simulation results of planar localization on $SE(2)$ using interoceptive measurements (angular and linear velocities) and exteroceptive measurements (GPS measurements).
+    The results are on left-invariant Kalman filter (L-InEKF) and on the batch.
+    The batch estimates are is initialized with the L-InEKF estimates.
+
+    It should be noted that the batch estimates assume that the first pose is known (i.e., ``fixed'' in the g$^2$o terminology); 
+    this is the reason behind the discrepancy between the the filter and the batch estimates at the first pose as shown in Figure~\ref{fig:se2_example_error_plots.eps}.
+
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=\textwidth]{figs/se2_example_trajectories.eps}
+      \caption{Estimated and true trajectories from the experiment.}
+      \label{fig:se2_example_trajectories.eps}
+    \end{figure}
+    
+    \begin{figure}[ht]
+      \centering
+      \includegraphics[width=\textwidth]{figs/se2_example_error_plots.eps}
+      \caption{
+          Error plots from the $SE(2)$ experimental results.
+          The error $\mbs{\xi} = \mbfhat{X}_{k}\liminus \mbf{X}_{k}$ is the left-invariant error defined in \eqref{eq:liminus definition}.
+        }
+      \label{fig:se2_example_error_plots.eps}
+    \end{figure}
+    
     \clearpage
     % \backmatter
     \bibliography{references}
