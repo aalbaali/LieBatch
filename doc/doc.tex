@@ -56,7 +56,7 @@
 
 \begin{document}
     % \frontmatter
-    {    
+    {
         \input{titlepage.tex}
         % \forceheader{Contents}
         \tableofcontents
@@ -79,13 +79,13 @@
     Linear least squares is a special type of unconstrained optimization problem. It has the form
     \begin{align}
         \label{eq:optim problem linear least squares}
-        \min_{\mbf{x}\in\rnums^{n}} 
+        \min_{\mbf{x}\in\rnums^{n}}
         &\f{1}{2}\left( \mbf{A} \mbf{x} - \mbf{b} \right)^{\trans}\left( \mbf{A}\mbf{x} - \mbf{b} \right).
     \end{align}
     \marginnote[-1cm]{The error function is really \emph{affince}, but that's how it is.}
     The objective function can be expanded to a quadratic form
     \begin{align}
-        J(\mbf{x}) 
+        J(\mbf{x})
         &= \f{1}{2}\left( \mbf{A} \mbf{x} - \mbf{b} \right)^{\trans}\left( \mbf{A}\mbf{x} - \mbf{b} \right)\\
         &= \f{1}{2}\mbf{x}^{\trans}\mbf{A}^{\trans}\mbf{A}\mbf{x} - \mbf{b}^{\trans}\mbf{A}\mbf{x} + \f{1}{2}\mbf{b}^{\trans}\mbf{b}
     \end{align}
@@ -107,7 +107,7 @@
         \label{eq:weighted least squares: objective function using W}
         J(\mbf{x}) &= \f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{W}\left(  \mbf{A}\mbf{x} - \mbf{b}\right),
     \end{align}
-    where $\mbf{W}=\mbf{W}^{\trans}>0$ is a symmetric positive definite matrix. 
+    where $\mbf{W}=\mbf{W}^{\trans}>0$ is a symmetric positive definite matrix.
     This form arises naturally in the maximum a posteriori (MAP) estimator over normally distributed measurements $\mbfrv{b}\sim\mc{N}\left( \mbf{b}, \mbs{\Sigma} \right)$, where the weight matrix is assigned $\mbf{W} = \mbs{\Sigma}\inv$ \cite{Barfoot_State_2017a}.
 
     However, since the weight matrix is positive definite, then the Cholesky decomposition can be used so that
@@ -116,13 +116,13 @@
     \end{align}
     where $\mbf{L}$ is a lower triangular matrix. The $\mbf{L}$ matrix can then be inserted into the objective function \eqref{eq:weighted least squares: objective function using W} which results in
     \begin{align}
-        J(\mbf{x}) 
+        J(\mbf{x})
         &= \f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{W}\left(  \mbf{A}\mbf{x} - \mbf{b}\right)\\
         &=\f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{L}^{\trans}\mbf{L}\left(  \mbf{A}\mbf{x} - \mbf{b}\right)\\
         &= \f{1}{2}\left( \mbf{L}\mbf{A}\mbf{x} - \mbf{L}\mbf{b} \right)^{\trans}\left( \mbf{L}\mbf{A}\mbf{x} - \mbf{L}\mbf{b}\right)\\
         &= \f{1}{2}\left( \mbftilde{A}\mbf{x} - \mbftilde{b} \right)^{\trans}\left( \mbftilde{A}\mbf{x} - \mbftilde{b}\right),
     \end{align}
-    where 
+    where
     \begin{align}
         \mbftilde{A} &= \mbf{L}\mbf{A},\\
         \mbftilde{b} &= \mbf{L}\mbf{b}.
@@ -155,7 +155,7 @@
     \end{align}
     where $\mbf{J}\in\rnums^{m\times n}$ is the Jacobian of the error function $\mbf{e}$ with respect to its design variables $\mbf{x}$.
 
-    Plugging the perturbed error function \eqref{eq:Euclidea NLS perturbed error} into the objective function gives 
+    Plugging the perturbed error function \eqref{eq:Euclidea NLS perturbed error} into the objective function gives
     \begin{align}
         \tilde{J}(\delta\mbf{x}) &\coloneqq J(\mbfbar{x} + \delta\mbf{x})\\
         &= \f{1}{2}\mbf{e}(\mbfbar{x} + \delta\mbf{x})^{\trans}\mbf{e}(\mbfbar{x} + \delta\mbf{x})\\
@@ -191,24 +191,24 @@
     \section{Non-Euclidean nonlinear least squares}
     If the design variables\sidenote{Elements of Lie groups will be denoted by upper case boldface letters.} $\mbf{X}$ are elements of non-Euclidean space, say elements of a Lie group $G$,\sidenote{For example, the Special Euclidean group of rotations $SO(3)$.} then the Euclidean addition operator `$+$' wouldn't necessarily work.
     This complicates things a little bit, and a more generalized approach must be taken.
-    
+
     The optimization problem will first take the form
     \begin{align}
         \min_{\mbf{X}\in G} \f{1}{2}\mbf{e}(\mbf{X})^{\trans}\mbf{e}(\mbf{X}),
     \end{align}
-    where $\mbf{e} : G \to \mbf{R}^{m}$. 
+    where $\mbf{e} : G \to \mbf{R}^{m}$.
 
-    The optimization problem can still be solved using Gauss-Newton method. 
-    As discussed in the previous section, the Jacobian of the error function with respect to the design variable is needed to compute the search direction. 
+    The optimization problem can still be solved using Gauss-Newton method.
+    As discussed in the previous section, the Jacobian of the error function with respect to the design variable is needed to compute the search direction.
     But what does that look like when the design variable is an element of a Lie group?
-    A generalized `addition' operator $\oplus$' is used. 
-    
-    For example, let $\mbf{X}\in SO(3)$ be an element of the $SO(3)$ group. 
-    Then the element $\mbf{X}$ can be perturbed by the column matrix $\mbs{\xi}\in\rnums^{3}$ that lives in the Euclidean space isomorphic to the tangent space $\mf{so}(3)$. 
+    A generalized `addition' operator $\oplus$' is used.
+
+    For example, let $\mbf{X}\in SO(3)$ be an element of the $SO(3)$ group.
+    Then the element $\mbf{X}$ can be perturbed by the column matrix $\mbs{\xi}\in\rnums^{3}$ that lives in the Euclidean space isomorphic to the tangent space $\mf{so}(3)$.
     The left-invariant increment operator `$\liplus$' over $SO(3)$ is then defined as
     \begin{align}
         \mbf{X} \liplus \mbs{\xi} &\triangleq \mbf{X}\exp(-\mbs{\xi}\crossop),
-    \end{align}    
+    \end{align}
      $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017a}
     \begin{align}
         \bbm
@@ -218,7 +218,7 @@
         \ebm\crossop
         &\triangleq
         \bbm
-            0 & -\xi_{3} & \xi_{2} \\ 
+            0 & -\xi_{3} & \xi_{2} \\
             \xi_{3} & 0 & -\xi_{1}\\
             -\xi_{2} & \xi_{1} & 0
         \ebm.
@@ -227,7 +227,7 @@
     Using such notation, the error function $\mbf{e}$ can be perturbed with respect to the Lie \emph{algebra} element (i.e., the $\mbs{\xi}\in\rnums^{n}$ element).
     The error function can then be perturbed to be of the form
     \begin{align}
-        \mbf{e}(\mbf{X}) 
+        \mbf{e}(\mbf{X})
         &= \mbf{e}(\mbfbar{X}\oplus \delta\mbs{\xi})\\
         % &\approx \mbf{e}(\mbfbar{X}) + \mbf{J}^{\mbf{e}}_{\mbs{\xi}}\delta\mbs{\xi},
         &\approx \mbf{e}(\mbfbar{X}) + \mbf{J}\delta\mbs{\xi},
@@ -245,7 +245,7 @@
         \mbf{X}^{(j+1)} &= \mbf{X}^{(j)}\oplus \left( \alpha^{(j)}\delta\mbs{\xi}^{\star} \right),
     \end{align}
     where $\alpha^{(j)}$ is the step-length computed and $\oplus$ is the defined increment operation.\sidenote{The perturbations are left-, right-, left-invariant-, and right-invariant-perturbations \cite{Sola_micro_2019,Barrau_Invariant_2018}.}
-    
+
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SE(2) Example
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -255,20 +255,20 @@
         \caption{Robot with point $z$ relative to point $w$. The body frame $\rframe[b]$ is attached to the robot, and reference frame $\rframe[a]$ is the reference frame.}
         \label{fig:car body}
     \end{marginfigure}
-    %   
-    Consider a robot moving on a plan like the one displayed in \figref{fig:car body}. 
-    Let $z_{k}$ be a \emph{point} on attached to the robot and $w$ be a reference \emph{point}. 
+    %
+    Consider a robot moving on a plan like the one displayed in \figref{fig:car body}.
+    Let $z_{k}$ be a \emph{point} on attached to the robot and $w$ be a reference \emph{point}.
     Furthermore, let $\rframe[b_{k}]$ be the robot reference frame (at time $k$), and $\rframe[a]$ be the reference frame (e.g., some inertial frame).
     The robot can then be described by the \emph{pose}
     \begin{align}
-        \pose[z_{k}w][ab_{k}] &= 
+        \pose[z_{k}w][ab_{k}] &=
         \bbm
             \dcm[ab_{k}] & \disp[z_{k}w][a] \\
             \mbf{0} & 1
         \ebm \in SE(2),
     \end{align}
-    where $\dcm[ab_{k}]\in SO(2)$ and $\disp[z_{k}w][a]\in\rnums^{2}$. 
-    For simplicity and visual clarity, notation 
+    where $\dcm[ab_{k}]\in SO(2)$ and $\disp[z_{k}w][a]\in\rnums^{2}$.
+    For simplicity and visual clarity, notation
     \begin{align}
         \mbf{X}_{k} \coloneqq \pose[z_{k}w][ab_{k}]
     \end{align}
@@ -279,9 +279,9 @@
     \begin{align}
         \mbfdot{X}(t) &= \mbf{X}(t)\Exp( \mbf{u}(t))\Exp(\rv{\boldsymbol{{w}}}(t)),
     \end{align}
-    where 
+    where
     \begin{align}
-        \mbf{u}(t) 
+        \mbf{u}(t)
         &=
         \bbm
             \omega^{ba}_{b}(t)\\
@@ -296,17 +296,17 @@
 
     The discrete-time kinematics can be described by\sidenote{Checkout \cite{Barfoot_State_2017a} for a more complete derivation.}
     \begin{align}
-        \mbf{X}_{k} 
+        \mbf{X}_{k}
         &= \mbf{X}_{k-1}\Exp( T_{k-1} \mbf{u}_{k-1})\Exp(\mbfrv{w}_{k-1})\\
         &= \mbf{X}_{k-1}\mbs{\Xi}_{k-1}\mbfrv{W}_{k-1},
     \end{align}
     where $T_{k-1}$ is the sampling period,
     \begin{align}
-        \mbs{\Xi}_{k-1} 
+        \mbs{\Xi}_{k-1}
         &= \Exp(T_{k-1}\mbf{u}_{k-1})\\
-        &= \exp(T_{k-1}\mbf{u}_{k-1}\expand),\\    
-        \mbf{u}_{k-1}\expand 
-        &= 
+        &= \exp(T_{k-1}\mbf{u}_{k-1}\expand),\\
+        \mbf{u}_{k-1}\expand
+        &=
         \bbm
             \left( \omega^{b_{k-1}a}_{b_{k-1}} \right)\crossop & \mbf{v}^{z_{k-1}w / a}_{a}\\
             \mbf{0} & 0
@@ -343,7 +343,7 @@
     \begin{align}
         \bbm
             \mbf{y}_{k}\\
-            1 
+            1
         \ebm
         &=
         \bbm
@@ -352,19 +352,26 @@
         \ebm\\
         &=
         \bbm
-            \dcm[ab_{k}] & \disp[z_{k}w][a] \\ 
+            \dcm[ab_{k}] & \disp[z_{k}w][a] \\
             \mbf{0} & 1
         \ebm
         \bbm
             \mbf{0} \\ 1
         \ebm
-        + 
+        +
         \bbm
             \mbfrv{n}_{k}\\
             0
         \ebm\\
-        &= 
-        \mbf{X}_{k}\mbf{b} + \bbm \mbfrv{n}_{k} \\ 0 \ebm.
+        \label{eq:meas. model GPS Lie group}
+        &=
+        \mbf{X}_{k}\mbf{b} + \bbm \mbfrv{n}_{k} \\ 0 \ebm,
+    \end{align}
+    where
+    \begin{align}
+      \mbf{b}
+      &=
+      \bbm 0 & 0 & 1 \ebm^{\trans}.
     \end{align}
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -373,22 +380,22 @@
     \subsection{Process model error functions and Jacobians}
     The left-invariant error on the process model is given by
     \begin{align}
-        \mbf{e}^{\mathrm{odom}}_{k}\left( 
+        \mbf{e}^{\mathrm{odom}}_{k}\left(
             \mbf{X}_{k-1},
             \mbf{X}_{k},
             \mbf{w}_{k-1}
-        \right) 
-        &= 
+        \right)
+        &=
         \Log
-        \left( 
-            \mbf{X}_{k}\inv                
+        \left(
+            \mbf{X}_{k}\inv
             \mbf{X}_{k-1}
             \mbs{\Xi}_{k-1}
             \Exp(\mbf{w}_{k-1})
         \right)\\
-        &= 
+        &=
         \log
-        \left( 
+        \left(
             \mbf{X}_{k}\inv
             \mbf{X}_{k-1}
             \mbs{\Xi}_{k-1}
@@ -396,25 +403,25 @@
         \right)
             \contract.
     \end{align}
-    The Jacobian of the error function with respect to the Lie algebra elements $\mbs{\xi}_{j}$ for $j=k - 1, k$ as well as with respect to the process noise can be computed by perturbing the error function. 
+    The Jacobian of the error function with respect to the Lie algebra elements $\mbs{\xi}_{j}$ for $j=k - 1, k$ as well as with respect to the process noise can be computed by perturbing the error function.
     Specifically,
-    \begin{fullwidth}    
+    \begin{fullwidth}
         \begin{align}
             \mbf{e}^{\mathrm{odom}}_{k}
-              \left( 
+              \left(
                   \mbf{X}_{k-1},
-                  \mbf{X}_{k}, 
+                  \mbf{X}_{k},
                   \delta\mbf{w}_{k-1}
-              \right) 
+              \right)
             &=
             \mbf{e}^{\mathrm{odom}}_{k}
               \left(
                 \mbfbar{X}_{k-1}
                   \liplus
-                  \mbs{\xi}_{k-1}, 
+                  \mbs{\xi}_{k-1},
                 \mbfbar{X}_{k}
                   \liplus
-                  \mbs{\xi}_{k}, 
+                  \mbs{\xi}_{k},
                 \delta\mbf{w}_{k-1}
               \right) \\
             &=
@@ -422,22 +429,22 @@
               \mbfbar{X}_{k}\inv
               \mbfbar{X}_{k-1}
               \Exp(-\mbs{\xi}_{k-1})
-              \mbs{\Xi}_{k-1} 
+              \mbs{\Xi}_{k-1}
               \Exp(\delta\mbf{w}_{k-1})
             \right)\\
-            &= 
-            \Log\left( 
+            &=
+            \Log\left(
               \Exp(\mbs{\xi}_{k})
               \mbfbar{X}_{k}\inv
               \mbfbar{X}_{k-1}
               \mbs{\Xi}_{k-1}
               \mbs{\Xi}_{k-1}\inv
               \Exp(-\mbs{\xi}_{k-1})
-              \mbs{\Xi}_{k-1} 
+              \mbs{\Xi}_{k-1}
               \Exp(\delta\mbf{w}_{k-1})
             \right)\\
-            &= 
-            \Log\left( 
+            &=
+            \Log\left(
               \Exp(\mbs{\xi}_{k})
               \mbfbar{X}_{k}\inv
               \mbfbar{X}_{k-1}
@@ -446,7 +453,7 @@
               \mbs{\xi}_{k-1})
               \Exp(\delta\mbf{w}_{k-1})
             \right)\\
-            &= 
+            &=
             \Log
             \left(
               \Exp(\mbs{\xi}_{k})
@@ -455,34 +462,34 @@
               \Exp(\delta\mbf{w}_{k-1})
             \right)\\
             &\approx
-            \mbfbar{e}^{\mathrm{odom}}_{k} + 
+            \mbfbar{e}^{\mathrm{odom}}_{k} +
             \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
-            \delta\mbs{\xi}_{k} 
+            \delta\mbs{\xi}_{k}
             -\mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
             \Adj{\mbs{\Xi}_{k-1}\inv}
             \delta\mbs{\xi}_{k-1}
             \Exp(\delta\mbf{w}_{k-1})
-            \nonumber \\ 
+            \nonumber \\
             &\mathrel{\phantom{=}} \negmedspace{}
-            + 
+            +
             \mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
             \delta\mbf{w}_{k-1},
         \end{align}
-        where 
+        where
         \begin{align}
-            \mbfbar{e}^{\mathrm{odom}}_{k} 
-            &\coloneqq 
+            \mbfbar{e}^{\mathrm{odom}}_{k}
+            &\coloneqq
             \mbf{e}
                 ^{\mathrm{odom}}
                 _{k}
-                \left( 
+                \left(
                   \mbfbar{X}_{k-1},
-                  \mbfbar{X}_{k}, 
+                  \mbfbar{X}_{k},
                   \mbf{0}
                 \right),
         \end{align}
         and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017a}.
-    \end{fullwidth}    
+    \end{fullwidth}
 
     The Jacobians of the odometry error with respect to the Lie algebra perturbations are then given by
     \begin{align}
@@ -490,8 +497,8 @@
             ^{\mbf{e}
                 ^{\mathrm{odom}}
                 _{k}}
-            _{\mbs{\xi}_{k-1}} 
-        &= 
+            _{\mbs{\xi}_{k-1}}
+        &=
         -\mbf{J}^{r}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv
         \Adj{\mbs{\Xi}_{k-1}\inv}
         , \\
@@ -499,9 +506,9 @@
             ^{\mbf{e}
                 ^{\mathrm{odom}}
                 _{k}}
-            _{\mbs{\xi}_{k}} 
-        &= 
-        \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv,       
+            _{\mbs{\xi}_{k}}
+        &=
+        \mbf{J}^{\ell}(\mbfbar{e}^{\mathrm{odom}}_{k})\inv,
     \end{align}
     and the with respect to the process noise\sidenote{Or any random variable.} is given by
     \begin{align}
@@ -509,8 +516,8 @@
             ^{\mbf{e}
                 ^{\mathrm{odom}}
                 _{k}}
-            _{\mbf{w}_{k-1}} 
-        % &\coloneqq 
+            _{\mbf{w}_{k-1}}
+        % &\coloneqq
         % \mbf{L}_{k-1}
         % \\
         &=
@@ -519,7 +526,7 @@
     \marginnote[-1cm]{
         This Jacobian of the process model error function w.r.t. process noise is usually denoted by $\mbf{L}_{k-1}$.
     }
-    
+
     The covariance on the error function can the be (approximately) given by
     \begin{align}
         \cov{
@@ -553,7 +560,124 @@
     % GPS measurement model error functions and Jacobians
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     \subsection{GPS measurement model error functions and Jacobians}
-    
+    Using the measurement model \eqref{eq:meas. model GPS Lie group}, the error function is given by
+    \begin{align}
+      \label{eq:error function GPS}
+      \bbm
+        \mbf{e}^{\mathrm{GPS}}_{k} \\
+        0
+      \ebm
+      &=
+      \bbm
+        \mbf{y}_{k} \\
+        1
+      \ebm
+      -
+      \mbf{X}_{k}\mbf{b}.
+    \end{align}
+    Perturbing the above error function with respect to the state, using a left-invariant error/perturbation gives
+    \begin{align}
+      \mbftilde{e}^{\mathrm{GPS}}_{k}
+      &=
+      \bbm
+        \mbf{e}^{\mathrm{GPS}}_{k} \\
+        0
+      \ebm
+      \\
+      &=
+      \bbm
+        \mbf{y}_{k} \\
+        1
+      \ebm
+      -
+      \left(
+        \mbfbar{X}_{k}
+        \liplus
+        \mbs{\xi}_{k}
+      \right)\mbf{b}
+      \\
+      &=
+      \bbm
+        \mbf{y}_{k} \\
+        1
+      \ebm
+      -
+      \mbfbar{X}_{k}
+      \exp\left(-\mbs{\xi}_{k}^{\wedge}\right)
+      \mbf{b}
+      \\
+      &\approx
+      \bbm
+        \mbf{y}_{k} \\
+        1
+      \ebm
+      -
+      \mbfbar{X}_{k}
+      \left(\eye-\mbs{\xi}_{k}^{\wedge}\right)
+      \mbf{b}
+      \\
+      &=
+      \underbrace{
+        \bbm
+        \mbf{y}_{k} \\
+        1
+        \ebm
+        -
+        \mbfbar{X}_{k}
+        \mbf{b}
+      }_{
+          \bar{\mbftilde{e}}^{\mathrm{GPS}}_{k}
+      }
+      +
+      \mbfbar{X}_{k}
+      \mbs{\xi}_{k}^{\wedge}
+      \mbf{b}
+      \\
+      &=
+      \bbm
+        \mbfbar{e}^{\mathrm{GPS}}_{k}\\
+        0
+      \ebm
+      +
+      \mbfbar{X}_{k}
+      \mbf{b}^{\odot}
+      \mbs{\xi}_{k}
+      \\
+      &=
+      \bbm
+        \mbfbar{e}^{\mathrm{GPS}}_{k}\\
+        0
+      \ebm
+      +
+      \bbm
+        \mbf{0} & \dcmbar[ab_{k}] \\
+           0    & \mbf{0}
+      \ebm
+      \mbs{\xi}_{k}.
+    \end{align}
+    Which results in
+    \begin{align}
+      \mbf{e}^{\mathrm{GPS}}_{k}
+      &=
+      \mbfbar{e}^{\mathrm{GPS}}_{k}
+      +
+      \bbm
+        \mbf{0} & \dcmbar[ab_{k}]
+      \ebm
+      \mbs{\xi}_{k}
+    \end{align}
+    Therefore, the Jacobian of the GPS measurement error function \eqref{eq:error function GPS} is
+    \begin{align}
+      \mbf{J}^{
+          \mbf{e}^{\mathrm{GPS}}_{k}
+       }_{\mbs{\xi}_{k}}
+       &=
+       \bbm
+         \mbf{0} &
+         \dcmbar[ab_{k}]
+       \ebm,
+    \end{align}
+    where $\dcmbar[ab_{k}]$ is the DCM of the robot at time $k$ at the linearization (i.e., at a Gauss-Newton iteration) point.
 
     \clearpage
     % \backmatter
