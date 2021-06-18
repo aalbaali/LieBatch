@@ -51,3 +51,7 @@ codegen/
 **.synctex.gz
 **-eps-converted-to.pdf
 **ilg
+**.xml
+**-blx.bib
+**.gz
+**.bib.bak

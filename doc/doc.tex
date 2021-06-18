@@ -3,6 +3,8 @@
 \documentclass[ nobib, nofonts, notoc]{tufte-handout}
 \usepackage{amro-common}
 \usepackage{amro-tufte}
+\addbibresource{references.bib}
+
 \makeatletter
 % Remove paragraph indentation
 \renewcommand{\@tufte@reset@par}{%
@@ -108,7 +110,7 @@
         J(\mbf{x}) &= \f{1}{2}\left( \mbf{A}\mbf{x} - \mbf{b} \right)^{\trans}\mbf{W}\left(  \mbf{A}\mbf{x} - \mbf{b}\right),
     \end{align}
     where $\mbf{W}=\mbf{W}^{\trans}>0$ is a symmetric positive definite matrix.
-    This form arises naturally in the maximum a posteriori (MAP) estimator over normally distributed measurements $\mbfrv{b}\sim\mc{N}\left( \mbf{b}, \mbs{\Sigma} \right)$, where the weight matrix is assigned $\mbf{W} = \mbs{\Sigma}\inv$ \cite{Barfoot_State_2017a}.
+    This form arises naturally in the maximum a posteriori (MAP) estimator over normally distributed measurements $\mbfrv{b}\sim\mc{N}\left( \mbf{b}, \mbs{\Sigma} \right)$, where the weight matrix is assigned $\mbf{W} = \mbs{\Sigma}\inv$ \cite{Barfoot_State_2017}.
 
     However, since the weight matrix is positive definite, then the Cholesky decomposition can be used so that
     \begin{align}
@@ -140,7 +142,7 @@
     \end{align}
     where $\mbf{e} : \rnums^{n} \to \rnums^{m}$ is some nonlinear \emph{error function}.
 
-    One way to solve this optimization iteratively is by linearizing the error function $\mbf{e}(\mbf{x})$ at some operating point $\mbfbar{x}$. This results in the Gauss-Newton equation \cite{Barfoot_State_2017a,Dellaert_Factor_2017}.
+    One way to solve this optimization iteratively is by linearizing the error function $\mbf{e}(\mbf{x})$ at some operating point $\mbfbar{x}$. This results in the Gauss-Newton equation \cite{Barfoot_State_2017,Dellaert_Factor_2017}.
 
     First, define the error on the optimizer. That is, let
     \begin{align}
@@ -209,7 +211,7 @@
     \begin{align}
         \mbf{X} \liplus \mbs{\xi} &\triangleq \mbf{X}\exp(-\mbs{\xi}\crossop),
     \end{align}
-        $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017a}
+        $(\cdot)\crossop$ is the skew-symmetric cross-operator defined as \cite{Barfoot_State_2017}
     \begin{align}
         \bbm
             \xi_{1}\\
@@ -243,7 +245,7 @@
         &\approx \mbf{e}(\mbfbar{X}) + \mbf{J}\delta\mbs{\xi},
     \end{align}
     where $\mbf{J}\in\rnums^{m\times n}$.
-    Sola~\cite{Sola_micro_2019} provides a good explanation of Jacobians over Lie groups elements.
+    Sola~\cite{Sola_Micro_2020} provides a good explanation of Jacobians over Lie groups elements.
     An example will be provided in the following sections.
 
     Just as in the Euclidean case, the Jacobian can then be used to compute the search direction
@@ -254,7 +256,7 @@
     \begin{align}
         \mbf{X}^{(j+1)} &= \mbf{X}^{(j)}\oplus \left( \alpha^{(j)}\delta\mbs{\xi}^{\star} \right),
     \end{align}
-    where $\alpha^{(j)}$ is the step-length computed and $\oplus$ is the defined increment operation.\sidenote{The perturbations are left-, right-, left-invariant-, and right-invariant-perturbations \cite{Sola_micro_2019,Barrau_Invariant_2018}.}
+    where $\alpha^{(j)}$ is the step-length computed and $\oplus$ is the defined increment operation.\sidenote{The perturbations are left-, right-, left-invariant-, and right-invariant-perturbations \cite{Sola_Micro_2020,Barrau_Invariant_2018}.}
 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % SE(2) Example
@@ -285,7 +287,7 @@
     will be used in this document.\footnote{The $\mbf{X}$ is usually reserved for `design variable' so the Lie group should hopefully be inferred from the context.}
 
     \subsection{Process model}
-    The process model is given by \cite{Barfoot_State_2017a}
+    The process model is given by \cite{Barfoot_State_2017}
     \begin{align}
         \mbfdot{X}(t) &= \mbf{X}(t)\Exp( \mbf{u}(t))\Exp(\rv{\boldsymbol{{w}}}(t)),
     \end{align}
@@ -302,9 +304,9 @@
     \begin{align}
         \rv{\boldsymbol{{w}}}(t) \sim \mc{GP}\left( \mbf{0}, \boldsymbol{Q}\delta(t-t') \right),
     \end{align}
-    is a zero-mean white-noise Gaussian Process (GP) with power spectral density $\boldsymbol{Q}$ \cite{Barfoot_State_2017a}.
+    is a zero-mean white-noise Gaussian Process (GP) with power spectral density $\boldsymbol{Q}$ \cite{Barfoot_State_2017}.
 
-    The discrete-time kinematics can be described by\sidenote{Checkout \cite{Barfoot_State_2017a} for a more complete derivation.}
+    The discrete-time kinematics can be described by\sidenote{Checkout \cite{Barfoot_State_2017} for a more complete derivation.}
     \begin{align}
         \mbf{X}_{k}
         &= \mbf{X}_{k-1}\Exp( T_{k-1} \mbf{u}_{k-1})\Exp(\mbfrv{w}_{k-1})\\
@@ -498,7 +500,7 @@
                     \mbf{0}
                 \right),
         \end{align}
-        and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017a}.
+        and $\mbf{J}^{\ell}(\cdot)$ and $\mbf{J}^{r}(\cdot)$ are the left- and right-Jacobians of the $SO(2)$ group, respectively \cite{Barfoot_State_2017}.
     \end{fullwidth}
 
     The Jacobians of the odometry error with respect to the Lie algebra perturbations are then given by
@@ -720,7 +722,5 @@
     
     \clearpage
     % \backmatter
-    \bibliography{references}
-    % \bibliographystyle{plainnat}
-    \bibliographystyle{IEEEtran}
+    \printbibliography
 \end{document}
