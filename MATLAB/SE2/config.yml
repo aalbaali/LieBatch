@@ -11,8 +11,12 @@ filename_gt : 'G:\My Drive\Professional\McGill\Masters\Data\2G\Simulation\figure
 # init_method : 'L-InEkF'
 init_method : 'odom'
 
-# Include loop closures (if the measurement is available)
-include_lc : 0
+# Batch params
+batch_params:
+  # Include GPS in the batch formulation
+  include_gps : 1
+  # Include loop closures (if the measurement is available)
+  include_lc  : 1
 
 # Gauss-Newton optimization parameters
 optim_params:

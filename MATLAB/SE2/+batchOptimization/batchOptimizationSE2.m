@@ -1,5 +1,6 @@
 function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
-  struct_vel, struct_gyro, struct_gps, struct_lc, t_sim, X_initial, params)
+  struct_vel, struct_gyro, struct_gps, struct_lc, t_sim, X_initial, batch_params,...
+  optim_params)
     %INITLINEKF(struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
     %generates left-invariant EKF solution.
     %
@@ -40,7 +41,9 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
     %       Simulation time steps
     %   X_initial   :   [ 3 x 3 x K]
     %       Optimization initial guess.
-    %   params  :   struct
+    %   batch_params  :   struct
+    %     Batch parameters (include_lc, include_gps)
+    %   optim_params  :   struct
     %       Optimization parameters (loaded from the config.yml file).
     %       
     % ----------------------------------
@@ -85,11 +88,11 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
     
     % Compte covariances/weight function
     Sigma = computeCovarianceErrorFunction( X_initial, struct_prior, ...
-      struct_vel, struct_gyro, struct_gps, struct_lc, t_sim);
+      struct_vel, struct_gyro, struct_gps, struct_lc, t_sim, batch_params);
     
     % Lambda error function
     func_err = @( X) errorFunction( X, struct_prior, struct_vel, ...
-      struct_gyro, struct_gps, struct_lc, t_sim);
+      struct_gyro, struct_gps, struct_lc, t_sim, batch_params);
     
     % Cholesky factor
 %     R_sigma = chol( Sigma, 'upper');
@@ -98,16 +101,16 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
     % Cost array
     cost_arr = [];
     % Armijo params
-    beta = params.armijo_beta;
-    c1   = params.armijo_c1;
+    beta = optim_params.armijo_beta;
+    c1   = optim_params.armijo_c1;
     
     % States at iteration j
     X_j = X_initial;    
-    for lv1 = 1 : params.max_iterations
+    for lv1 = 1 : optim_params.max_iterations
         % Compute error function
         [ e, J] = func_err( X_j);
         % Compute search direction
-        switch lower( params.lin_solver)
+        switch lower( optim_params.lin_solver)
             case 'qr'
                 % Reorder vars                                
                 % Solve using QR decomposition
@@ -126,8 +129,8 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
         d_k = d_k(:);
         
         % Check if search direction is a descent direction
-        if d_k' * J' * (Sigma \ e) >= 0
-            warning('Not a descent direction!');
+        if d_k' * J' * (Sigma \ e) >= 0 && norm( d_k) ~= 0
+            warning('Not a descent direction!');            
         end
         
         % Reshape search direction 
@@ -136,7 +139,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
         % Armijo back-tracking
         obj_val = (1/2) * e' * (Sigma\e); % Objective function value
         grad_val = d_k' * (J' * ( Sigma \ e));
-        for lv2 = 0 : params.armijo_max_iteration-1
+        for lv2 = 0 : optim_params.armijo_max_iteration-1
             alpha_k = beta^lv2;     
             % Increment X_k as to left-invariant error
             X_j_tmp = reshape( cell2mat( arrayfun( @(kk) X_j( :, :, kk) * ...
@@ -152,7 +155,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
                 break;
             end                        
         end
-        if lv2 == params.armijo_max_iteration-1
+        if lv2 == optim_params.armijo_max_iteration-1
             warning('Armijo max iteration reached');            
             X_j = X_j_tmp;            
             break;        
@@ -164,8 +167,8 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
         cost_arr = [cost_arr; e' * (Sigma \ e)];
         
         % Stopping criterion
-        if norm( J' * (Sigma \ e)) * norm(Sigma, 'fro') <= params.tol_ngrad_stop ...
-                        || norm( d_k)/numel(d_k) <= params.tol_ngrad_stop
+        if norm( J' * (Sigma \ e)) * norm(Sigma, 'fro') <= optim_params.tol_ngrad_stop ...
+                        || norm( d_k)/numel(d_k) <= optim_params.tol_ngrad_stop
             fprintf('Batch on r_ba_a converged after %i iterations\n', lv1);            
             successful = true;
             break;
@@ -175,8 +178,8 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
     % Prompt warning if optimization didn't converge after max.
     % iterations reached.
     if ~successful && ~ ( norm( J' * (Sigma \ e))*norm(Sigma, 'fro') <  ...
-            params.tol_ngrad_stop ...
-            || norm( d_k)/numel(d_k) <= params.tol_ngrad_stop)
+            optim_params.tol_ngrad_stop ...
+            || norm( d_k)/numel(d_k) <= optim_params.tol_ngrad_stop)
         warning('Optimization did not converge');
     else
         successful = true;
@@ -189,7 +192,7 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
 end
 
 function [ cov_err] = computeCovarianceErrorFunction( X_initial, ...
-  struct_prior, struct_vel, struct_gyro, struct_gps, struct_lc, t_sim)
+  struct_prior, struct_vel, struct_gyro, struct_gps, struct_lc, t_sim, batch_params)
     % Computes the covariance on the error function    
     
     dt_func_k = @(kk) t_sim( kk + 1) - t_sim( kk);
@@ -199,11 +202,18 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, ...
     % Number of states per pose (constant value)
     n_x = 3;
         
-    % GPS params
-    t_gps   = struct_gps.time;
-    n_gps   = 2;
-    idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
-    K_gps   = length( t_gps);
+    % GPS params    
+    if batch_params.include_gps
+      t_gps   = struct_gps.time;
+      n_gps   = 2;
+      idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+      K_gps   = length( t_gps);
+    else
+      t_gps = [];
+      n_gps = 2;
+      idx_gps = [];
+      K_gps   = 0;
+    end
     
     % LC params
     t_lc   = struct_lc.time;
@@ -246,7 +256,11 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, ...
     Q_3d( 2 : 3, 2 : 3, :) = struct_vel.cov( :, :, 1 : K - 1);
     cov_odom  = sparse( blkdiag3d( Q_3d));
     %   GPS
-    cov_gps   = sparse( blkdiag3d( struct_gps.cov));
+    if batch_params.include_gps
+      cov_gps   = sparse( blkdiag3d( struct_gps.cov));
+    else
+      cov_gps   = [];
+    end
     %   LC
     cov_lc    = sparse( blkdiag3d( struct_lc.cov));
     
@@ -261,7 +275,7 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, ...
 end
 
 function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, ...
-  struct_gyro, struct_gps, struct_lc, t_sim)
+  struct_gyro, struct_gps, struct_lc, t_sim, batch_params)
     % Batch error function
     
     % Number of poses
@@ -275,12 +289,20 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, ...
     %   Odometry
     %   Creat the odometry array: u_k = [ gyro_k; vel_k];
     u_arr = [ struct_gyro.mean; struct_vel.mean];
-    %   GPS measurements
-    y_gps   = struct_gps.mean;
-    t_gps   = struct_gps.time;
-    n_gps   = size( y_gps, 1);
-    K_gps   = length( t_gps);
-    idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+    %   GPS measurements    
+    if batch_params.include_gps
+      y_gps   = struct_gps.mean;
+      t_gps   = struct_gps.time;
+      n_gps   = size( y_gps, 1);
+      K_gps   = length( t_gps);
+      idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+    else
+      y_gps   = nan( 2, 0);
+      t_gps   = [];
+      n_gps   = 2;      
+      K_gps   = 0;
+      idx_gps = [];
+    end    
     %   LC
     y_lc    = struct_lc.mean;
     idx_lc  = struct_lc.idx;

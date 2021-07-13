@@ -34,6 +34,9 @@ data_struct = load( config_yml.filename_data).data_struct;
 % Simulation
 t_sim = data_struct.sim.time;
 
+% Batch parameters
+batch_params = config_yml.batch_params;
+
 % Measurements
 %   Prior
 X_prior = data_struct.meas.prior.mean;
@@ -45,24 +48,24 @@ cov_vel  = data_struct.meas.velocity.cov;
 meas_gyro = data_struct.meas.gyro.mean;
 cov_gyro  = data_struct.meas.gyro.cov;
 %   GPS
-meas_gps = data_struct.meas.gps.mean;
-cov_gps  = data_struct.meas.gps.cov;
+gps_struct = data_struct.meas.gps;
+
 %   LC (if it exists)
-if config_yml.include_lc && isfield( data_struct.meas, 'lc')
-  include_lc = config_yml.include_lc;
+if batch_params.include_lc && isfield( data_struct.meas, 'lc')
+  include_lc = batch_params.include_lc;
   % Measurements
-   lcs = data_struct.meas.lc;
+   lcs_struct = data_struct.meas.lc;
 else
   % Don't include LC if the measurements don't exist
   warning('No LC is included');
   include_lc = false;
-  lcs = struct( 'mean', [], 'cov', [], 'idx', [], 'time', []);
+  lcs_struct = struct( 'mean', [], 'cov', [], 'idx', [], 'time', []);
 end
 %% Run L-InEKF
 [ X_kf, P_kf] = Initialization.initLinekf( data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
-                                    data_struct.meas.gps, ...
+                                    gps_struct, ...
                                     t_sim);
 %% Batch initialization
 fprintf("Initializing states using '%s'\n", config_yml.init_method);
@@ -81,10 +84,11 @@ toc();
 [ X_batch, infm_batch ] = batchOptimization.batchOptimizationSE2(data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
-                                    data_struct.meas.gps, ...
-                                    lcs, ...
+                                    gps_struct, ...
+                                    lcs_struct, ...
                                     t_sim, ...
                                     X_initial, ...
+                                    config_yml.batch_params, ...
                                     config_yml.optim_params);
 
 
