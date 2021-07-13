@@ -6,8 +6,6 @@
 %   The noisy data should be provided, and the output is the state estimates and
 %   covariances. 
 %
-%   No plots are provded, thus not ground-truth is needed.
-%
 %   Amro Al-Baali
 %   08-May-2021
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -39,16 +37,13 @@ batch_params = config_yml.batch_params;
 
 % Measurements
 %   Prior
-X_prior = data_struct.meas.prior.mean;
-P_prior = data_struct.meas.prior.cov;
+prior_struct = data_struct.meas.prior;
 %   Linear velocity
-meas_vel = data_struct.meas.velocity.mean;
-cov_vel  = data_struct.meas.velocity.cov;
+meas_vel_struct = data_struct.meas.velocity;
 %   Angular velocity
-meas_gyro = data_struct.meas.gyro.mean;
-cov_gyro  = data_struct.meas.gyro.cov;
+meas_gyro_struct = data_struct.meas.gyro;
 %   GPS
-gps_struct = data_struct.meas.gps;
+meas_gps_struct = data_struct.meas.gps;
 
 %   LC (if it exists)
 if batch_params.include_lc && isfield( data_struct.meas, 'lc')
@@ -65,14 +60,14 @@ end
 [ X_kf, P_kf] = Initialization.initLinekf( data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
-                                    gps_struct, ...
+                                    meas_gps_struct, ...
                                     t_sim);
 %% Batch initialization
 fprintf("Initializing states using '%s'\n", config_yml.init_method);
 tic();
 switch lower(config_yml.init_method)
     case 'odom'
-        X_initial = Initialization.initOdom( X_prior, meas_vel, meas_gyro, t_sim);
+        X_initial = Initialization.initOdom( prior_struct, meas_vel_struct, meas_gyro_struct, t_sim);
     case 'l-inekf'   
         X_initial = X_kf;
         
@@ -84,7 +79,7 @@ toc();
 [ X_batch, infm_batch ] = batchOptimization.batchOptimizationSE2(data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
-                                    gps_struct, ...
+                                    meas_gps_struct, ...
                                     lcs_struct, ...
                                     t_sim, ...
                                     X_initial, ...
@@ -149,7 +144,7 @@ xlabel('$t_{k}$ [s]', 'Interpreter', 'latex', 'FontSize', 14);
 % Get states
 X_gt_states( K)     = StateSE2();
 X_kf_states( K)     = StateSE2(); 
-X_batch_states( K) = StateSE2();
+X_batch_states( K)  = StateSE2();
 
 for kk = 1 : K
     % Ground truth
