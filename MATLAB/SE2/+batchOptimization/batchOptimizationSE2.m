@@ -1,5 +1,5 @@
-function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel, struct_gyro, struct_gps, ...
-    t_sim, X_initial, params)
+function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
+  struct_vel, struct_gyro, struct_gps, struct_lc, t_sim, X_initial, params)
     %INITLINEKF(struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
     %generates left-invariant EKF solution.
     %
@@ -27,6 +27,15 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
     %           meas        :   [ 2 x n_gps] double
     %           cov         :   [ 2 x 2 x n_gps] SPD matrices    
     %           time        :   [ 1 x n_gps] measurements time
+    %   struct_lc       :   struct
+    %       LC measurements, where n_lc is the number of loop closures
+    %       Measurement model is of the form
+    %         [-]_k = T_1 \ T_2
+    %       Contains
+    %           meas        :   [ 3 x 3 x n_lc ] SE2 measurements
+    %           cov         :   [ 3 x 3 x n_lc ] SPD matrices
+    %           idx         :   [ n_lc x 2 ]     LC indices ( [idx_1, idx_2])
+    %           time        :   [ n_lc x 2 ]     Time at the LCs
     %   t_sim       :   [ 1 x K] double
     %       Simulation time steps
     %   X_initial   :   [ 3 x 3 x K]
@@ -68,12 +77,19 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
     t_gps   = struct_gps.time;
     n_gps   = length( t_gps);
     idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+    %   Loop closures
+    idx_lc = struct_lc.idx;
+    t_lc   = struct_lc.time;    
+    y_lc   = struct_lc.mean;
+    n_lc   = size( idx_lc, 1);
     
     % Compte covariances/weight function
-    Sigma = computeCovarianceErrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    Sigma = computeCovarianceErrorFunction( X_initial, struct_prior, ...
+      struct_vel, struct_gyro, struct_gps, struct_lc, t_sim);
     
     % Lambda error function
-    func_err = @( X) errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim);
+    func_err = @( X) errorFunction( X, struct_prior, struct_vel, ...
+      struct_gyro, struct_gps, struct_lc, t_sim);
     
     % Cholesky factor
 %     R_sigma = chol( Sigma, 'upper');
@@ -172,7 +188,8 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, struct_vel,
     X_batch = X_j;
 end
 
-function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
+function [ cov_err] = computeCovarianceErrorFunction( X_initial, ...
+  struct_prior, struct_vel, struct_gyro, struct_gps, struct_lc, t_sim)
     % Computes the covariance on the error function    
     
     dt_func_k = @(kk) t_sim( kk + 1) - t_sim( kk);
@@ -188,23 +205,35 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, s
     idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
     K_gps   = length( t_gps);
     
+    % LC params
+    t_lc   = struct_lc.time;
+    idx_lc = struct_lc.idx;
+    K_lc   = size( idx_lc, 1);
+    
+    % Total number of random varaibles
+    K_rvs = n_x * K + n_gps * K_gps + n_x * K_lc;
+    
     % First, compute the Jacobian of the error function w.r.t. the state        
-    jac_prior_n = sparse( [], [], [], 3, n_x * K + n_gps * K_gps);
+    jac_prior_n = sparse( [], [], [], 3, K_rvs);
     jac_prior_n( 1 : end, 1 : 3) = speye( n_x);
     %   Odometry         
     jac_odom_w_cell = arrayfun( @(kk) dt_func_k(kk) * speye( n_x), 1 : K - 1, 'UniformOutput', false);
-    jac_odom_w = sparse( [], [], [], 3 * (K - 1), n_x * K + n_gps * K_gps);
+    jac_odom_w = sparse( [], [], [], 3 * (K - 1), K_rvs);
     jac_odom_w(1 : end, 3 + (1:n_x * (K -1))) = blkdiag( jac_odom_w_cell{ :});
     %   GPS
     func_jac_gps_n_k = @(kk) X_initial( 1 : 2, 1 : 2, kk)';
     jac_gps_n_cell = arrayfun(@(kk) func_jac_gps_n_k(kk), idx_gps, 'UniformOutput', false);    
-    jac_gps_n = sparse( [], [], [], n_gps * K_gps, 3 * K + n_gps * K_gps);
-    jac_gps_n( 1 : end, n_x * K + 1 : end) = blkdiag( jac_gps_n_cell{ :});
+    jac_gps_n = sparse( [], [], [], n_gps * K_gps, K_rvs);
+    jac_gps_n( 1 : end, n_x * K + (1 : n_gps * K_gps)) = blkdiag( jac_gps_n_cell{ :});
+    %   LCs
+    jac_lc_n = sparse( [], [], [], n_x * K_lc, K_rvs);
+    jac_lc_n( 1 : end, n_x * K + n_gps * K_gps + (1 : n_x * K_lc)) = speye( n_x * K_lc);
     
     % Augment Jacobians
     jac_err = [ jac_prior_n;
                 jac_odom_w;
-                jac_gps_n];
+                jac_gps_n;
+                jac_lc_n];
    
             
     % Now, the covariances on the random variables
@@ -218,9 +247,11 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, s
     cov_odom  = sparse( blkdiag3d( Q_3d));
     %   GPS
     cov_gps   = sparse( blkdiag3d( struct_gps.cov));
+    %   LC
+    cov_lc    = sparse( blkdiag3d( struct_lc.cov));
     
     % Augment covariances (in the block-diagonal sense)
-    cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps);    
+    cov_rvs = blkdiag( cov_prior, cov_odom, cov_gps, cov_lc);    
     
     % Finally, compute the covariances on the error function
     cov_err = (jac_err * cov_rvs * jac_err');
@@ -229,7 +260,8 @@ function [ cov_err] = computeCovarianceErrorFunction( X_initial, struct_prior, s
     cov_err = (1/2) * ( cov_err + cov_err');    
 end
 
-function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struct_gyro, struct_gps, t_sim)
+function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, ...
+  struct_gyro, struct_gps, struct_lc, t_sim)
     % Batch error function
     
     % Number of poses
@@ -249,6 +281,11 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
     n_gps   = size( y_gps, 1);
     K_gps   = length( t_gps);
     idx_gps = ceil( t_gps / ( t_sim( 2) - t_sim( 1))); % Assuming frequency is constant
+    %   LC
+    y_lc    = struct_lc.mean;
+    idx_lc  = struct_lc.idx;
+    t_lc    = struct_lc.time;
+    K_lc    = size( idx_lc, 1);
     
     % Set up the arrays and matrices
     %   Prior
@@ -266,7 +303,7 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
     err_gps = nan( n_gps, K_gps);
     %       Jacobian of GPS err w.r.t. states
     jac_gps_x = sparse( [], [], [], 0, n_x * K);
-    
+        
     % Latest GPS measurement
     idx_gps_j = 1;
     % Let's build the matrices!
@@ -310,7 +347,37 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, struc
         end
     end
     
+    %   LC
+    %       Error array
+    err_lc  = nan( n_x, K_lc);
+    %       Jacobian of LC error w.r.t. states
+    jac_lc_x = sparse( [], [], [], n_x * K_lc, n_x * K);
+    for lv1 = 1 : K_lc
+      idx_1 = idx_lc( lv1, 1);
+      idx_2 = idx_lc( lv1, 2);
+      T_1 = X( :, :, idx_1);
+      T_2 = X( :, :, idx_2);
+      
+      y_lc_j = y_lc( :, :, lv1);
+      % Error 
+      err_lc( :, lv1) = SE2.Log( T_2 \ T_1 * y_lc_j);
+      
+      % Jacobian of the error function w.r.t. first pose T_1
+      jac_lcj_1 = kron( sparse( 1, idx_1, 1, 1, K), ...
+        -SE2.computeJRightInv(err_lc( :, lv1)) * SE2.adjoint(SE2.inverse(y_lc_j)));
+      % Jacobian of the error function w.r.t. second pose T_2
+      jac_lcj_2 = kron( sparse( 1, idx_2, 1, 1, K), SE2.computeJLeftInv( err_lc( :, lv1) ));
+      % Augment Jacobians and add to LC Jacobian w.r.t. all states.
+      jac_lc_x( (lv1 - 1) * 3 + (1:3), :) = jac_lcj_1 + jac_lcj_2;
+    end
+    
     % Augment the error arrays and Jacobians
-    err_val = [ err_prior; reshape( err_odom, [], 1); reshape( err_gps, [], 1)];
-    err_jac = [ jac_prior_x; jac_odom_x; jac_gps_x];    
+    err_val = [ err_prior; 
+                reshape( err_odom, [], 1); 
+                reshape( err_gps, [], 1);
+                reshape( err_lc, [], 1)];
+    err_jac = [ jac_prior_x; 
+                jac_odom_x; 
+                jac_gps_x;
+                jac_lc_x];    
 end

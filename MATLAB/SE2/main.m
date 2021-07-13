@@ -47,7 +47,17 @@ cov_gyro  = data_struct.meas.gyro.cov;
 %   GPS
 meas_gps = data_struct.meas.gps.mean;
 cov_gps  = data_struct.meas.gps.cov;
-
+%   LC (if it exists)
+if config_yml.include_lc && isfield( data_struct.meas, 'lc')
+  include_lc = config_yml.include_lc;
+  % Measurements
+   lcs = data_struct.meas.lc;
+else
+  % Don't include LC if the measurements don't exist
+  warning('No LC is included');
+  include_lc = false;
+  lcs = struct( 'mean', [], 'cov', [], 'idx', [], 'time', []);
+end
 %% Run L-InEKF
 [ X_kf, P_kf] = Initialization.initLinekf( data_struct.meas.prior, ...
                                     data_struct.meas.velocity, ...
@@ -72,6 +82,7 @@ toc();
                                     data_struct.meas.velocity, ...
                                     data_struct.meas.gyro, ...
                                     data_struct.meas.gps, ...
+                                    lcs, ...
                                     t_sim, ...
                                     X_initial, ...
                                     config_yml.optim_params);
