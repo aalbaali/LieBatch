@@ -107,72 +107,74 @@ function [ X_batch, infm_batch] = batchOptimizationSE2(struct_prior, ...
     % States at iteration j
     X_j = X_initial;
     for lv1 = 1 : optim_params.max_iterations
-        % Compute error function
-        [ e, J] = func_err( X_j);
-        % Compute search direction
-        switch lower( optim_params.lin_solver)
-            case 'qr'
-                % Reorder vars
-                % Solve using QR decomposition
-                [ ~, R] = qr( L_sigma \ [ J, -e], 0);
-                % Search direction
-                d_k = R( :, 1 : end - 1) \ R( :, end);
+      sprintf('\tStarting iteration\t%i\n', lv1);
+      % Compute error function
+      [ e, J] = func_err( X_j);
+      % Compute search direction
+      switch lower( optim_params.lin_solver)
+        case 'qr'
+          % Reorder vars
+          % Solve using QR decomposition
+          [ ~, R] = qr( L_sigma \ [ J, -e], 0);
+          % Search direction
+          d_k = R( :, 1 : end - 1) \ R( :, end);
 
-            case 'chol'
-                % Get weight matrix (inverse of covariance)
-                R = chol( sparse( J' * ( Sigma \ J)));
-                d_k = -full( R \ ( R' \ (J' * ( Sigma \e))));
-            case '\'
-                d_k = -(J' * (Sigma \ J)) \ (J' * (Sigma \ e));
-        end
-        % Make sure d_k is a column matrix;
-        d_k = d_k(:);
+        case 'chol'
+          % Get weight matrix (inverse of covariance)
+          R = chol( sparse( J' * ( Sigma \ J)));
+          d_k = -full( R \ ( R' \ (J' * ( Sigma \e))));
+        case '\'
+          d_k = -(J' * (Sigma \ J)) \ (J' * (Sigma \ e));
+      end
+      % Make sure d_k is a column matrix;
+      d_k = d_k(:);
 
-        % Check if search direction is a descent direction
-        if d_k' * J' * (Sigma \ e) >= 0 && norm( d_k) ~= 0
-          warning('Not a descent direction!');
-        end
+      % Check if search direction is a descent direction
+      if d_k' * J' * (Sigma \ e) >= 0 && norm( d_k) ~= 0
+        warning('Not a descent direction!');
+      end
 
-        % Reshape search direction
-        d_k_mat = reshape( d_k , 3, []);
+      % Reshape search direction
+      d_k_mat = reshape( d_k , 3, []);
 
-        % Armijo back-tracking
-        obj_val = (1/2) * e' * (Sigma\e); % Objective function value
-        grad_val = d_k' * (J' * ( Sigma \ e));
-        for lv2 = 0 : optim_params.armijo_max_iteration-1
-            alpha_k = beta^lv2;
-            % Increment X_k as to left-invariant error
-            X_j_tmp = reshape( cell2mat( arrayfun( @(kk) X_j( :, :, kk) * ...
-                se2alg.expMap( - alpha_k * d_k_mat( :, kk)), 1 : K, ...
-                'UniformOutput', false)), 3, 3, []);
-            % Compute new error function
-            [ e, ~] = func_err( X_j_tmp);
-            obj_val_tmp = (1/2)* e' * (Sigma \ e);
-            if obj_val_tmp <= obj_val + c1 * alpha_k * grad_val
-                % Armijo stopping criterion
-                % Solution found
-                X_j = X_j_tmp;
-                break;
-            end
-        end
-        if lv2 == optim_params.armijo_max_iteration-1
-          warning('Armijo max iteration reached');
-          X_j = X_j_tmp;
-          break;
-        end
-
-        % Update error and Jacobian
+      % Armijo back-tracking
+      obj_val = (1/2) * e' * (Sigma\e); % Objective function value
+      grad_val = d_k' * (J' * ( Sigma \ e));
+      for lv2 = 0 : optim_params.armijo_max_iteration-1
+        alpha_k = beta^lv2;
+        % Increment X_k as to left-invariant error
+        X_j_tmp = reshape( cell2mat( arrayfun( @(kk) X_j( :, :, kk) * ...
+            se2alg.expMap( - alpha_k * d_k_mat( :, kk)), 1 : K, ...
+            'UniformOutput', false)), 3, 3, []);
+        % Compute new error function
         [ e, J] = func_err( X_j_tmp);
-
-        cost_arr = [cost_arr; e' * (Sigma \ e)];
-
-        % Stopping criterion
-        if norm( J' * (Sigma \ e)) * norm(Sigma, 'fro') <= optim_params.tol_ngrad_stop ...
-                        || norm( d_k)/numel(d_k) <= optim_params.tol_ngrad_stop
-            fprintf('Batch on r_ba_a converged after %i iterations\n', lv1);
-            successful = true;
-            break;
+        obj_val_tmp = (1/2)* e' * (Sigma \ e);
+        if obj_val_tmp <= obj_val + c1 * alpha_k * grad_val
+          % Armijo stopping criterion
+          % Solution found
+          X_j = X_j_tmp;
+          armijo_satisfied = true;
+          break;
+        else
+          % Solution not found
+          armijo_satisfied = false;
         end
+      end
+      if ~armijo_satisfied && lv2 == optim_params.armijo_max_iteration-1
+        warning('Armijo max iteration reached');
+        X_j = X_j_tmp;
+        break;
+      end
+
+      cost_arr = [cost_arr; e' * (Sigma \ e)];
+
+      % Stopping criterion
+      if norm( J' * (Sigma \ e)) * norm(Sigma, 'fro') <= optim_params.tol_ngrad_stop ...
+                    || norm( d_k)/numel(d_k) <= optim_params.tol_ngrad_stop
+        fprintf('Batch converged after %i iterations\n', lv1);
+        successful = true;
+        break;
+      end
     end
 
     % Prompt warning if optimization didn't converge after max.
@@ -286,6 +288,12 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, ...
     % Measurements
     %   Prior
     X_prior = struct_prior.mean;
+    %   Prior index
+    if isfield( struct_prior, 'idx')
+      idx_prior = struct_prior.idx;
+    else
+      idx_prior = 1;
+    end
     %   Odometry
     %   Creat the odometry array: u_k = [ gyro_k; vel_k];
     u_arr = [ struct_gyro.mean; struct_vel.mean];
@@ -311,8 +319,8 @@ function [ err_val, err_jac] = errorFunction( X, struct_prior, struct_vel, ...
 
     % Set up the arrays and matrices
     %   Prior
-    err_prior   = SE2.Log( X( :, :, 1) \ X_prior);
-    jac_prior_x = kron( sparse( 1, 1, 1, 1, K), speye( n_x));
+    err_prior   = SE2.Log( X( :, :, idx_prior) \ X_prior);
+    jac_prior_x = kron( sparse( 1, idx_prior, 1, 1, K), speye( n_x));
     %   Odometry
     %       Error array
     err_odom = nan( n_x, K - 1);
