@@ -1,7 +1,9 @@
 # Noisy data file
-filename_data : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\noisy_data.mat'
+# filename_data : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\noisy_data.mat'
+filename_data : 'G:\My Drive\Professional\McGill\Masters\Data\2G\Simulation\figure_8_trajectory\noisy_data.mat'
 
-filename_gt : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\gt_SE2.mat'
+# filename_gt : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\gt_SE2.mat'
+filename_gt : 'G:\My Drive\Professional\McGill\Masters\Data\2G\Simulation\figure_8_trajectory\gt_SE2.mat'
 
 # Initialization type. Options:
 #   - odom (odometry)
@@ -9,10 +11,17 @@ filename_gt : '\\wsl$\Ubuntu-20.04\home\aa\Documents\Data\Data_generator\SE2\gt_
 # init_method : 'L-InEkF'
 init_method : 'odom'
 
+# Batch params
+batch_params:
+  # Include GPS in the batch formulation
+  include_gps : 1
+  # Include loop closures (if the measurement is available)
+  include_lc  : 1
+
 # Gauss-Newton optimization parameters
 optim_params:
   # Maximum number of iterations
-  max_iterations  : 1e2
+  max_iterations  : 10
 
   # Normalized gradient stopping criterion. 
   #   The normalization is (norm( J' * (Sigma \ e))*norm(Sigma)) < tol

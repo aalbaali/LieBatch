@@ -19,6 +19,11 @@ namespace g2o{
             _error = delta.log().coeffs();
         }
 
+        // void UEdgeSE2Prior::linearizeOplus(){
+        //         // std::cout << "HI" << std::endl;
+        //         _jacobianOplusXi = JacF_Xkm1::Identity();
+        // }
+
         bool UEdgeSE2Prior::read(std::istream& is)
         {
             // Vector3 p;

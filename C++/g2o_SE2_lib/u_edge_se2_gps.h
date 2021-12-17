@@ -27,6 +27,9 @@ namespace g2o {
             _measurement = m;
         }
 
+        // Left-invariant Jacobian
+        void linearizeOplus();
+
         virtual bool read(std::istream& is);
         virtual bool write(std::ostream& os) const;
     };

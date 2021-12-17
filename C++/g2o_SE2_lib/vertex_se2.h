@@ -24,12 +24,14 @@ namespace g2o {
             _estimate.setIdentity();
         }
 
+        // Left-invariant implementation
         virtual void oplusImpl(const double* update)
         {
           // Lie Algebra element. Note that the update is [x; y; theta].
           LieAlg dx( update[0], update[1], update[2]);
 
-          _estimate += dx;          
+        // Left-invariant 'addition'.
+          _estimate += (-dx);          
         }
 
         virtual bool read(std::istream& is);

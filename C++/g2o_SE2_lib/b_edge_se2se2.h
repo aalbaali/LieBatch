@@ -40,6 +40,9 @@ namespace g2o {
             _Xi = LieAlg( _dt * _measurement).exp();
         }
 
+        // Implement Jacobians of the error function
+        void linearizeOplus();
+        
         virtual bool read(std::istream& is);
         virtual bool write(std::ostream& os) const;
 
